@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="webgl"></div>
+
+<script src="three.js"></script>
+
+<script>
+    var colours = [0xCD853F, 0x191970, 0xDAA520];
+    var container;
+    var camera, scene, projector, renderer;
+    var particleMaterial;
+    var width = 740;
+    var height = 350;
+    var objects = [];
+
+    new THREE.CylinderGeometry()
+
+    function init() {
+        container = $("#webgl");
+        camera = new THREE.PerspectiveCamera(70, width / height, 1, 10000);
+        camera.position.set(0, 300, 500);
+        scene = new THREE.Scene();
+
+        var geometry = new THREE.CylinderGeometry(80, 80, 20, 7);
+
+        for (var i = 0; i < 8; i++) {
+
+            var object = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+                color: colours[Math.floor(Math.random() * colours.length)],
+                opacity: 0.4
+            }));
+            object.position.x = Math.random() * 400 - 200;
+            object.position.y = Math.random() * 400 - 200;
+            object.position.z = Math.random() * 400 - 200;
+
+            var r = Math.random();
+            object.scale.x = Math.random() * 0.5 + 0.8;
+            object.scale.y = Math.random() * 0.5 + 0.8;
+            object.scale.z = Math.random() * 0.5 + 0.8;
+
+            object.rotation.x = Math.random() * 2 * Math.PI;
+            object.rotation.y = Math.random() * 2 * Math.PI;
+            object.rotation.z = Math.random() * 2 * Math.PI;
+
+            scene.add(object);
+
+            objects.push(object);
+
+        }
+
+        var PI2 = Math.PI * 2;
+        particleMaterial = new THREE.SpriteCanvasMaterial({
+
+            color: 0x000000,
+            program: function (context) {
+
+                context.beginPath();
+                context.arc(0, 0, 0.5, 0, PI2, true);
+                context.fill();
+
+            }
+
+        });
+
+        projector = new THREE.Projector();
+
+        renderer = new THREE.CanvasRenderer();
+        renderer.setClearColor(0xfefefe);
+        renderer.setSize(width, height);
+
+        container.append(renderer.domElement);
+
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        window.addEventListener('resize', onWindowResize, false);
+
+    }
+
+    function onWindowResize() {
+        width = $(".site").width();
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function onDocumentMouseDown(event) {
+
+        event.preventDefault();
+        var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+        projector.unprojectVector(vector, camera);
+        var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+        var intersects = raycaster.intersectObjects(objects);
+
+        if (intersects.length > 0) {
+            intersects[0].object.material.color.setHex(Math.random() * 0xffffff);
+        }
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+    }
+
+    var radius = 600;
+    var theta = 0;
+
+    function render() {
+        theta += 0.2;
+        camera.position.x = radius * Math.sin(THREE.Math.degToRad(theta));
+        camera.position.y = radius * Math.sin(THREE.Math.degToRad(theta));
+        camera.position.z = radius * Math.cos(THREE.Math.degToRad(theta));
+        camera.lookAt(scene.position);
+        renderer.render(scene, camera);
+    }
+
+    $(function () {
+        width = $(".site").width();
+        init();
+        animate();
+    });
+</script>
+</body>
+</html>

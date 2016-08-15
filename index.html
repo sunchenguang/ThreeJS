@@ -1,0 +1,512 @@
+<html>
+<head>
+    <title>My first Three.js app</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+</head>
+<body>
+<script src="stats.min.js"></script>
+<script src="three.js"></script>
+<script src="TrackballControls.js"></script>
+<script>
+    var container, stats;
+    var camera, controls, scene, renderer, xLine, yLine, zLine, rotWorldMatrix;
+    var objects = [];
+    var plane = new THREE.Plane();
+    var raycaster = new THREE.Raycaster();
+    var mouse = new THREE.Vector2(),
+            offset = new THREE.Vector3(),
+            intersection = new THREE.Vector3(),
+            INTERSECTED, SELECTED;
+    var width = window.innerWidth,
+            height = window.innerHeight, distanceX = 0, distanceY = 0, speedX = 0, speedY = 0, prevX = 0, prevY = 0;
+
+    var xAxis = new THREE.Vector3(1, 0, 0), yAxis = new THREE.Vector3(0, 1, 0), zAxis = new THREE.Vector3(0, 0, 1);
+    var xLineColor = 0xFF0000, yLineColor = 0x008000, zLineColor = 0x0000FF;
+    var cube, xCube, yCube, zCube, frameGeometry, scaleController, scaleYDistance = 0, scalePrevY = 0;
+
+    var allObjectsGroup = new THREE.Group();
+
+
+    // 初始化统计器
+    function initStats() {
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.right = '0px';
+        stats.domElement.style.top = '0px';
+        container.appendChild(stats.domElement);
+    }
+
+    // 初始化container,renderer
+    function initThree() {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+        renderer.sortObjects = false;
+        renderer.setClearColor(0xfffffff, 1);
+
+        container.appendChild(renderer.domElement);
+    }
+    function initControls() {
+        controls = new THREE.TrackballControls(camera);
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.noZoom = false;
+        controls.noPan = false;
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        // 绑定事件
+        renderer.domElement.addEventListener('mousemove', onDocumentMouseMove, false);
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+        renderer.domElement.addEventListener('mouseup', onDocumentMouseUp, false);
+
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function getLine(point1, point2, lineName) {
+        return (function () {
+            var lineMaterial;
+            switch (lineName) {
+                case 'xLine':
+                    lineMaterial = new THREE.LineBasicMaterial({
+                        color: xLineColor
+                    });
+                    break;
+                case 'yLine':
+                    lineMaterial = new THREE.LineBasicMaterial({
+                        color: yLineColor
+                    });
+                    break;
+                case 'zLine':
+                    lineMaterial = new THREE.LineBasicMaterial({
+                        color: zLineColor
+                    });
+                    break;
+                default:
+                    console.log('get line default color');
+            }
+
+            var xLineGeometry = new THREE.Geometry();
+            xLineGeometry.vertices.push(
+                    point1,
+                    point2
+            );
+            var LINE = new THREE.Line(xLineGeometry, lineMaterial);
+
+            return LINE;
+        })();
+
+
+    }
+
+    function initExternalCube() {
+        var geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        var xMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0000
+        });
+        var yMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00
+        });
+        var zMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0000ff
+        });
+
+        xCube = new THREE.Mesh(geometry, xMaterial);
+        yCube = new THREE.Mesh(geometry, yMaterial);
+        zCube = new THREE.Mesh(geometry, zMaterial);
+
+
+        xCube.position.copy(xLine.geometry.vertices[1]);
+        yCube.position.copy(yLine.geometry.vertices[1]);
+        zCube.position.copy(zLine.geometry.vertices[1]);
+
+
+    }
+
+
+    function initAxisLine(point) {
+        if (point) {
+            scene.remove(xLine);
+            scene.remove(yLine);
+            scene.remove(zLine);
+
+            var lineIndex = objects.indexOf(xLine);
+            objects.splice(lineIndex, 3);
+
+            xLine = null;
+            yLine = null;
+            zLine = null;
+
+        }
+        var point = point ? point : {x: 0, y: 0, z: 0};
+        var pointX = point.x, pointY = point.y, pointZ = point.z;
+        var lineLength = 3;
+
+
+        xLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
+        yLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX, pointY + lineLength, pointZ), 'yLine');
+        zLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX, pointY, pointZ + lineLength), 'zLine');
+
+        xLine.name = "xLine";
+        yLine.name = "yLine";
+        zLine.name = "zLine";
+
+        objects.push(xLine, yLine, zLine);
+    }
+
+    function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    function initGrid() {
+        var helper = new THREE.GridHelper(20, 20);
+        scene.add(helper);
+    }
+
+
+    // Rotate an object around an arbitrary axis in world space
+    function rotateAroundWorldAxis(object, axis, radians) {
+        rotWorldMatrix = new THREE.Matrix4();
+        rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+        rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+        object.matrix = rotWorldMatrix;
+
+        object.rotation.setFromRotationMatrix(object.matrix);
+    }
+
+    // 在正方体所有边上创建虚线
+    function createBoxFrame(geometry) {
+        frameGeometry = new THREE.Geometry();
+        var vector;
+
+        geometry.vertices.forEach(function (item, index) {
+            vector = item.clone();
+            vector.x -= item.x;
+
+            frameGeometry.vertices.push(item.clone());
+            frameGeometry.vertices.push(vector);
+
+            vector = item.clone();
+            vector.y -= item.y;
+
+            frameGeometry.vertices.push(vector);
+            frameGeometry.vertices.push(item.clone());
+
+            vector = item.clone();
+            vector.z -= item.z;
+
+            frameGeometry.vertices.push(item.clone());
+            frameGeometry.vertices.push(vector);
+        });
+
+        frameGeometry.computeLineDistances();
+
+        return frameGeometry;
+
+    }
+
+
+    function initCamera() {
+//        camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera = new THREE.OrthographicCamera(-8, 8, 4, -4, 0.1, 1000)
+        camera.position.set(3, 4, 3);
+
+        camera.up.set(0, 1, 0);
+
+        //  照相机聚焦于（0,0,0）时 修改position只会改变物体相对大小，不改变相关位置
+        camera.lookAt({
+            x: 0,
+            y: 0,
+            z: 0
+        })
+
+    }
+
+
+    function initScene() {
+        scene = new THREE.Scene();
+    }
+
+
+    function initLight() {
+        var light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
+        light.position.set(100, 100, 200);
+        scene.add(light);
+    }
+
+    // 初始化正方体
+    function initObject() {
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        var material = new THREE.MeshBasicMaterial({
+            color: 0xcccccc,
+            depthTest: true,
+            polygonOffset: true,
+            polygonOffsetFactor: 0.5,
+            polygonOffsetUnits: 0.5
+        });
+
+        cube = new THREE.Mesh(geometry, material);
+        cube.name = "cube";
+        cube.position.set(0, 0, 0);
+
+        objects.push(cube);
+        var frameGeometry = createBoxFrame(geometry);
+        //正方体添加实线
+        cube.add(new THREE.LineSegments(frameGeometry, new THREE.LineBasicMaterial(
+                {
+                    color: 'black'
+                }
+        )));
+        //添加虚线
+        cube.add(new THREE.LineSegments(frameGeometry, new THREE.LineDashedMaterial(
+                {
+                    color: 'black',
+                    gapSize: 0.05,
+                    dashSize: 0.05,
+                    depthTest: false
+                }
+        )));
+        //添加中心立方体
+        scaleController = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({
+            color: "red",
+            depthTest: false
+        }));
+        scaleController.name = 'scaleController';
+        cube.add(scaleController);
+        objects.push(scaleController);
+
+    }
+
+
+    function onDocumentMouseMove(event) {
+
+        event.preventDefault();
+
+        //得到当前鼠标于三维的x,y坐标
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+
+        if (SELECTED) {
+            // 只有选中正方体才移动
+            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'cube') {
+                // 物体随鼠标移动 group中心=交点-偏移
+                allObjectsGroup.position.copy(intersection.sub(offset));
+                console.log(plane);
+            }
+
+            // 选中x轴线时
+            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'xLine') {
+                distanceY = event.clientY - prevY;
+                speedY = distanceY * 0.01;
+                // 第一次点击移动时不旋转
+                if (prevY != 0) {
+                    rotateAroundWorldAxis(objects[0], xAxis, speedY);
+                }
+                prevY = event.clientY;
+            }
+
+            // 选中y轴线时
+            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'yLine') {
+                distanceX = event.clientX - prevX;
+                speedX = distanceX * 0.01;
+                // 第一次点击移动时不旋转
+                if (prevX != 0) {
+                    rotateAroundWorldAxis(objects[0], yAxis, speedX);
+
+                }
+                prevX = event.clientX;
+            }
+            // 选中z轴线时
+            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'zLine') {
+                distanceY = event.clientY - prevY;
+                speedY = distanceY * 0.01;
+                // 第一次点击移动时不旋转
+                if (prevY != 0) {
+                    rotateAroundWorldAxis(objects[0], zAxis, -speedY);
+
+                }
+                prevY = event.clientY;
+            }
+            // 选中中心立方体时
+            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'scaleController') {
+                scaleYDistance = event.clientY - scalePrevY;
+                if (scalePrevY != 0) {
+                    if (scaleYDistance > 0) {
+                        allObjectsGroup.scale.multiplyScalar(1.02);
+                    } else {
+                        if (allObjectsGroup.scale.x > 0.5) {
+                            allObjectsGroup.scale.multiplyScalar(0.98);
+                        }
+                    }
+                }
+                scalePrevY = event.clientY;
+
+
+            }
+
+
+            return;
+        }
+        var intersects = raycaster.intersectObjects(objects);
+        if (intersects.length > 0) {
+            if (INTERSECTED != intersects[0].object) {
+                if (INTERSECTED) {
+                    INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+                }
+                INTERSECTED = intersects[0].object;
+                INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+                plane.setFromNormalAndCoplanarPoint(
+                        camera.getWorldDirection(plane.normal),
+                        INTERSECTED.position);
+            }
+            container.style.cursor = 'pointer';
+        } else {
+            if (INTERSECTED) {
+                INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+            }
+            INTERSECTED = null;
+            container.style.cursor = 'auto';
+        }
+    }
+    function onDocumentMouseDown(event) {
+
+        event.preventDefault();
+
+        raycaster.setFromCamera(mouse, camera);
+
+        var intersects = raycaster.intersectObjects(objects);
+
+        if (intersects.length > 0) {
+            controls.enabled = false;
+
+            SELECTED = intersects[0].object;
+            intersects.forEach(function (item, index) {
+                if (item.object == cube) {
+                    SELECTED = cube;
+                }
+                if (item.object == scaleController) {
+                    SELECTED = scaleController;
+                }
+
+
+            });
+
+
+            if (raycaster.ray.intersectPlane(plane, intersection)) {
+                //cube的position一直没变，是group的位置变化 偏移=交点-group中心
+                offset.copy(intersection).sub(allObjectsGroup.position);
+            }
+
+            container.style.cursor = 'move';
+
+        }
+
+    }
+
+    function onDocumentMouseUp(event) {
+
+        event.preventDefault();
+
+        controls.enabled = true;
+
+        if (INTERSECTED) {
+
+            SELECTED = null;
+
+        }
+
+
+        container.style.cursor = 'auto';
+
+//        offset = new THREE.Vector3();
+
+        speedX = 0;
+        speedY = 0;
+        prevX = 0;
+        prevY = 0;
+
+        scalePrevY = 0;
+
+
+    }
+
+
+    function animate() {
+
+        requestAnimationFrame(animate);
+
+        render();
+        stats.update();
+
+    }
+
+    function render() {
+
+        controls.update();
+
+        renderer.render(scene, camera);
+
+    }
+
+
+    function threeStart() {
+        initThree();
+        initStats();
+        initCamera();
+        initScene();
+        initLight();
+        initGrid();
+        initObject();
+        initControls();
+        initAxisLine();
+        initExternalCube();
+
+
+        allObjectsGroup.add(cube);
+        allObjectsGroup.add(xLine);
+        allObjectsGroup.add(yLine);
+        allObjectsGroup.add(zLine);
+
+        allObjectsGroup.add(xCube);
+        allObjectsGroup.add(yCube);
+        allObjectsGroup.add(zCube);
+
+
+        scene.add(allObjectsGroup);
+
+        animate();
+
+    }
+
+
+    threeStart();
+
+</script>
+</body>
+</html>
