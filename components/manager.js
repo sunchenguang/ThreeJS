@@ -51,17 +51,18 @@ class Manager {
         this.initControls();
         this.initCube();
 
-        this.scaleController = this.cube.children.filter(function (item, index) {
-            return item.name == 'scaleController';
-        })[0];
+        // this.scaleController = this.cube.children.filter(function (item, index) {
+        //     return item.name == 'scaleController';
+        // })[0];
 
-        this.objects = this.scene.children;
+        // this.objects = this.scene.children;
         // this.objects.push(this.cube);
 
 
         console.log(this)
 
-        for (let key of this.axis) {
+        for (let key in this.axis) {
+            // console.log(key)
             this.axisGroup.add(this.axis[key]);
         }
 
@@ -69,6 +70,10 @@ class Manager {
         this.allObjectsGroup.add(this.axisGroup);
 
         this.scene.add(this.allObjectsGroup);
+
+        // console.log(this.cube)
+        // console.log(this.axisGroup)
+        this.objects = [this.cube, ...this.axisGroup.children];
 
         console.log(this);
 

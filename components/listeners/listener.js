@@ -40,11 +40,42 @@ import THREE from 'three';
 // }
 
 export default {
-    onMouseMove(e){
+    onMouseMove(event){
+        event.preventDefault();
+
+        console.log('mousemove-----------')
+
+        manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+
+        manager.raycaster.setFromCamera(manager.mouse, manager.camera);
+
+
+        if (manager.SELECTED) {
+            //
+            let intersects = manager.raycaster.intersectObject(manager.SELECTED);
+            if (intersects.length > 0) {
+                let intersection = intersects[0].point;
+                if (manager.SELECTED.name == "cube") {
+                    // 物体随鼠标移动 group中心=交点-偏移
+                    console.log(manager)
+
+                    manager.allObjectsGroup.position.copy(intersection.sub(manager.offset));
+                }
+            }
+
+
+        }
+
 
     },
     onMouseDown(event){
         event.preventDefault();
+
+        console.log('mousedown')
+
+        manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
 
         manager.raycaster.setFromCamera(manager.mouse, manager.camera);
 
@@ -53,38 +84,54 @@ export default {
 
         if (intersects.length > 0) {
             console.log(intersects)
+            let chosen = null;
 
             manager.controls.enabled = false;
 
-            manager.SELECTED = intersects.pop().object;
+            chosen = intersects[0];
+            manager.SELECTED = chosen.object;
 
-            // intersects.forEach(function (item, index) {
-            //     if (item.object == manager.cube) {
-            //         manager.SELECTED = manager.cube;
-            //     }
-            //     if (item.object == manager.scaleController) {
-            //         manager.SELECTED = manager.scaleController;
-            //     }
-            //
-            //
-            // });
+            for (let item of intersects) {
 
-            manager.offset.copy(intersection).sub(manager.allObjectsGroup.position);
+                if (item.object.name == "cube") {
+                    chosen = item;
+                    manager.SELECTED = chosen.object;
+                }
+                if (item.object.name == "scaleController") {
+                    chosen = item;
+                    manager.SELECTED = chosen.object;
+                    break;
+                }
 
+            }
+
+            manager.intersection = chosen.point;
+
+            manager.offset.copy(manager.intersection).sub(manager.allObjectsGroup.position);
+
+            console.log(manager)
 
             // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
             //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
             //     offset.copy(intersection).sub(allObjectsGroup.position);
             // }
 
-            manager.container.style.cursor = 'move';
+            // manager.container.style.cursor = 'move';
 
         }
 
 
     },
-    onMouseUp(e){
+    onMouseUp(event){
+        event.preventDefault();
 
+        manager.controls.enabled = true;
+
+        // if (INTERSECTED) {
+
+        manager.SELECTED = null;
+
+        // }
     },
     onWindowResize(e){
         manager.camera.aspect = window.innerWidth / window.innerHeight;

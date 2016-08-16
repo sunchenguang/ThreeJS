@@ -12,9 +12,10 @@ class Cube {
         this.axis = {};
 
 
-        this.init();
         this.addAxis();
+        this.init();
         this.initExternalCube();
+        this.addCylinder();
 
     }
 
@@ -135,13 +136,32 @@ class Cube {
 
     addAxis() {
         this.axis = new Axis();
-        // this.cube.add(this.axis.xLine);
-        // this.cube.add(this.axis.yLine);
-        // this.cube.add(this.axis.zLine);
-
-
     }
 
+    addCylinder() {
+        let geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+        let material = new THREE.MeshBasicMaterial({
+            // visible: false
+            color: 0xffff00
+        });
+        let xCylinder = new THREE.Mesh(geometry, material);
+        let yCylinder = new THREE.Mesh(geometry, material);
+        let zCylinder = new THREE.Mesh(geometry, material);
+
+        xCylinder.name = "xCylinder";
+        yCylinder.name = "yCylinder";
+        zCylinder.name = "zCylinder";
+
+
+        xCylinder.position.copy(new THREE.Vector3(this.axis.xLine.geometry.vertices[1].x / 2, 0, 0));
+        yCylinder.position.copy(new THREE.Vector3(0, this.axis.yLine.geometry.vertices[1].y / 2, 0));
+        zCylinder.position.copy(new THREE.Vector3(0, 0, this.axis.zLine.geometry.vertices[1].z / 2));
+
+        this.axis.xCylinder = xCylinder.rotateZ(Math.PI / 2);
+        this.axis.yCylinder = yCylinder;
+        this.axis.zCylinder = zCylinder.rotateX(Math.PI / 2);
+
+    }
 
 }
 

@@ -318,6 +318,7 @@
 
         if (SELECTED) {
             // 只有选中正方体才移动
+            //intersectPlane 返回交点，如果没有则返回null
             if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'cube') {
                 // 物体随鼠标移动 group中心=交点-偏移
                 allObjectsGroup.position.copy(intersection.sub(offset));
@@ -407,6 +408,8 @@
         var intersects = raycaster.intersectObjects(objects);
 
         if (intersects.length > 0) {
+            console.log(intersects)
+
             controls.enabled = false;
 
             SELECTED = intersects[0].object;
