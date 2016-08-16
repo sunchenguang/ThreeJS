@@ -160,7 +160,7 @@
         }
         var point = point ? point : {x: 0, y: 0, z: 0};
         var pointX = point.x, pointY = point.y, pointZ = point.z;
-        var lineLength = 3;
+        var lineLength = 2;
 
 
         xLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
@@ -263,7 +263,7 @@
 
     // 初始化正方体
     function initObject() {
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var geometry = new THREE.BoxGeometry(3, 3, 3);
 
         var material = new THREE.MeshBasicMaterial({
             color: 0xcccccc,
@@ -363,9 +363,11 @@
                 if (scalePrevY != 0) {
                     if (scaleYDistance > 0) {
                         allObjectsGroup.scale.multiplyScalar(1.02);
+                        axisGroup.scale.divideScalar(1.02);
                     } else {
                         if (allObjectsGroup.scale.x > 0.5) {
                             allObjectsGroup.scale.multiplyScalar(0.98);
+                            axisGroup.scale.divideScalar(0.98);
                         }
                     }
                 }
@@ -492,18 +494,19 @@
         initExternalCube();
 
 
-        allObjectsGroup.add(cube);
-        allObjectsGroup.add(xLine);
-        allObjectsGroup.add(yLine);
-        allObjectsGroup.add(zLine);
+        axisGroup.add(xLine);
+        axisGroup.add(yLine);
+        axisGroup.add(zLine);
 
-        allObjectsGroup.add(xCube);
-        allObjectsGroup.add(yCube);
-        allObjectsGroup.add(zCube);
+        axisGroup.add(xCube);
+        axisGroup.add(yCube);
+        axisGroup.add(zCube);
+
+        allObjectsGroup.add(cube);
+        allObjectsGroup.add(axisGroup);
 
 
         scene.add(allObjectsGroup);
-
         animate();
 
     }

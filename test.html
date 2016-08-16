@@ -1,0 +1,485 @@
+<html>
+<head>
+    <title>My first Three.js app</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+</head>
+<body>
+<script src="three.js"></script>
+<script>
+    var prevX;           //上次触发鼠标移动事件时鼠标X坐标位置
+    var prevY;           //上次触发鼠标移动事件时鼠标Y坐标位置
+    var speedX = 0;           //立方体x轴旋转速度
+    var speedY = 0;           //立方体y轴旋转速度
+    var speedZ = 0;           //立方体z轴旋转速度
+    var raycaster = new THREE.Raycaster();    //射线对象，用于获得鼠标当前对象
+    var mouse = new THREE.Vector2();        //保存当前对象的canvas坐标
+    var currSelectedObj;                    //当前选择对象
+    var camera;
+    var scene;
+    var renderer;
+    var cube;
+    var axis_x;           //坐标轴
+    var axis_y;           //坐标轴
+    var axis_z;           //坐标轴
+    var axis;            //当前选择的坐标
+    var cube_Border_Group = new THREE.Group();        //边框+立方体组
+    var cube_Border_Axis_Group = new THREE.Group();  //边框+立方体+坐标轴组
+    document.addEventListener('mousewheel', onDocumentMouseWheel, false);
+
+
+    function initCamera() {
+//                camera = new THREE.PerspectiveCamera( 70 , window.innerWidth/window.innerHeight, 0.1, 3000 );
+        camera = new THREE.OrthographicCamera(window.innerWidth / -2,
+                window.innerWidth / 2,
+                window.innerHeight / 2,
+                window.innerHeight / -2
+                , 10, 10000);
+        camera.position.set(1000, 1000, 1000);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();
+        //scene.add( new THREE.GridHelper( 500, 25 ) );
+    }
+
+    function initRenderer() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xFFFFFF, 1.0);
+        document.body.appendChild(renderer.domElement);
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+    }
+
+
+    function initObj() {
+        drawCube();
+        drawAxis();
+        renderer.render(scene, camera);
+    }
+
+
+    /**
+     * 画立方体
+     * */
+    function drawCube() {
+        var geometry = new THREE.BoxGeometry(100, 100, 100);
+        geometry.colorsNeedUpdate = true;
+        var material = new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            color: 0xCCCCCC,
+            transparent: false,
+            polygonOffset: true,
+            polygonOffsetFactor: 0.5
+        });
+        material.opacity = 0.9;
+        cube = new THREE.Mesh(geometry, material);
+        drawVisiableBorder();
+        drawUnVisiableBorder();
+        cube_Border_Group.add(cube);
+        // cube_Border_Group.position.y = 200;
+        cube_Border_Axis_Group.add(cube_Border_Group);
+        scene.add(cube_Border_Axis_Group);
+    }
+
+
+    //画圆柱体
+    function drawCylinder(length) {
+        var geometry = new THREE.CylinderGeometry(20, 20, length, 56);
+        var material = new THREE.MeshBasicMaterial({visible: true, color: 0x879378, depth: false});
+        var cylinder = new THREE.Mesh(geometry, material);
+        return cylinder;
+    }
+
+
+    /**
+     * 画坐标轴
+     * */
+    function drawAxis() {
+        //画x轴
+        var p1 = new THREE.Vector3(0, 0, 0);
+        var p2 = new THREE.Vector3(300, 0, 0);
+        axis_x = DrawLine(p1, p2, 0x000000, false);
+        // axis_x.position.y = 200;
+        cylinder_x = drawCylinder(300);
+        cylinder_x.position.y = 150;
+        cylinder_x.rotation.z = -90 / 180 * Math.PI;
+        cylinder_x.position.y = 200;
+        cylinder_x.position.x = 150;
+        // cube_Border_Axis_Group.add(cylinder_x);
+        cube_Border_Axis_Group.add(axis_x);
+
+        //先画y轴
+        axis_y = DrawLine(p1, p2, 0x000000, false);
+        axis_y.rotation.z = 90 / 180 * Math.PI;
+        cylinder_y = drawCylinder(200);
+        // cube_Border_Axis_Group.add(cylinder_y);
+        cube_Border_Axis_Group.add(axis_y);
+
+        //画z轴
+        axis_z = DrawLine(p1, p2, 0x000000, false);
+        axis_z.rotation.y = -90 / 180 * Math.PI;
+        // axis_z.position.y = 200;
+        cylinder_z = drawCylinder(300);
+        cylinder_z.position.y = 150;
+        cylinder_z.rotation.x = 90 / 180 * Math.PI;
+        cylinder_z.position.y = 200;
+        cylinder_z.z = 150;
+        // cube_Border_Axis_Group.add(cylinder_z);
+        cube_Border_Axis_Group.add(axis_z);
+
+        scene.add(cube_Border_Axis_Group);
+    }
+
+
+    /**
+     * 画可见边
+     * */
+    function drawVisiableBorder() {
+        for (var i = 0; i < cube.geometry.vertices.length; i++) {
+            var point = new THREE.Vector3();
+            point.copy(cube.geometry.vertices[i]);
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.x = -point2.x / 2;
+            var line = DrawLine(point, point2);
+            cube_Border_Group.add(line);
+
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.y = -point2.y / 2;
+            DrawLine(point, point2);
+            var line = DrawLine(point, point2);
+            cube_Border_Group.add(line);
+
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.z = -point2.z / 2;
+            DrawLine(point, point2);
+            var line = DrawLine(point, point2);
+            cube_Border_Group.add(line);
+        }
+    }
+
+
+    /**
+     * 画隐藏边
+     * */
+    function drawUnVisiableBorder() {
+        for (var i = 0; i < cube.geometry.vertices.length; i++) {
+            var point = new THREE.Vector3();
+            point.copy(cube.geometry.vertices[i]);
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.x = -point2.x / 2;
+
+            DrawDashLine(point, point2);
+
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.y = -point2.y / 2;
+            DrawDashLine(point, point2);
+
+            var point2 = new THREE.Vector3();
+            point2.copy(point);
+            point2.z = -point2.z / 2;
+            DrawDashLine(point, point2);
+        }
+
+    }
+
+    /**
+     * 实线
+     * */
+    function DrawLine(v1, v2, color, depthTest) {
+        if (!arguments[2]) color = 0x000000;
+        if (!arguments[3]) depthTest = true;
+        var boxVertexGeo = new THREE.Geometry();
+        var boxLineMaterial = new THREE.LineBasicMaterial({vertexColors: true, depthTest: depthTest});
+        boxLineMaterial.linewidth = 10;
+        var p1 = new THREE.Vector3();
+        p1.copy(v1);
+        var p2 = new THREE.Vector3();
+        p2.copy(v2);
+        boxVertexGeo.vertices.push(p1);
+        boxVertexGeo.vertices.push(p2);
+        boxVertexGeo.colors.push(new THREE.Color(color));
+        boxVertexGeo.colors.push(new THREE.Color(color));
+        boxVertexGeo.computeLineDistances();
+        var boxVertex = new THREE.Line(boxVertexGeo, boxLineMaterial, THREE.LineSegments);
+        return boxVertex;
+    }
+
+
+    /**
+     * 虚线
+     * */
+    function DrawDashLine(v1, v2) {
+        var boxVertexGeo = new THREE.Geometry();
+        var boxLineMaterial = new THREE.LineDashedMaterial({
+            color: 0x010101,
+            dashSize: 5,
+            gapSize: 10,
+            depthTest: false
+        });
+        var color3 = new THREE.Color(0x010101);
+        var color4 = new THREE.Color(0x010101);
+        var p3 = v1;
+        var p4 = v2;
+        boxVertexGeo.vertices.push(p3);
+        boxVertexGeo.vertices.push(p4);
+        boxVertexGeo.colors.push(color3, color4);
+        boxVertexGeo.computeLineDistances();
+        var boxVertex = new THREE.Line(boxVertexGeo, boxLineMaterial, THREE.LineSegments);
+        cube_Border_Group.add(boxVertex);
+    }
+
+
+    /**
+     * 鼠标按下的时间，添加鼠标移动、释放、超出函数
+     * 移动：计算方向和速度
+     * 释放：删除监听函数，立方体转动慢慢停止
+     * 移出：删除监听函数，立方体转动慢慢停止
+     * @param event
+     */
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+        mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+        mouse.y = -( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        /*交汇点对像*/
+        var intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            /*取第一个交汇对像（最接近相机）*/
+            currSelectedObj = intersects[0].object;
+        }
+        eventDispacher(event);
+        render();
+    }
+
+
+    /**
+     * 点击事件分发
+     * */
+    function eventDispacher(event) {
+        console.log(currSelectedObj);
+        prevX = event.clientX;
+        prevY = event.clientY;
+        if (currSelectedObj === cube) {
+            console.log("click cube");
+            document.addEventListener('mousemove', onCubeDrag, false);
+            document.addEventListener('mousewheel', onDocumentMouseWheel, false);
+        } else if (currSelectedObj === axis_x) {
+            console.log("click axis_x");
+            document.addEventListener('mousemove', onAxisXDrag, false);
+        } else if (currSelectedObj === axis_y) {
+            console.log("click axis_y");
+            document.addEventListener('mousemove', onAxisYDrag, false);
+        } else if (currSelectedObj === axis_z) {
+            console.log("click axis_z");
+            document.addEventListener('mousemove', onAxisZDrag, false);
+        }
+        if (typeof currSelectedObj != "undefined") {
+            document.addEventListener('mouseup', onDocumentMouseUp, false);
+            document.addEventListener('mouseout', onDocumentMouseOut, false);
+        }
+    }
+
+
+    /**
+     * 点击立方体后拖动
+     * */
+    function onCubeDrag(event) {
+        var yDisp = event.clientX - prevX;   //y方向上的位移,由于屏幕坐标和现实坐标相反需要变换
+        var xDisp = event.clientY - prevY;   //x方向上的位移,由于屏幕坐标和现实坐标相反需要变换
+        cube_Border_Group.position.x += yDisp;
+        cube_Border_Group.position.y += yDisp * (0.4);
+        //将三维坐标的移动转换成2D坐标的移动，0.4这个系数是根据视角得出
+        cube_Border_Group.position.y -= xDisp;
+        axis_x.position.x += yDisp;
+        axis_x.position.y += yDisp * (0.4);
+        axis_x.position.y -= xDisp;
+
+        axis_y.position.x += yDisp;
+        axis_y.position.y += yDisp * (0.4);
+        axis_y.position.y -= xDisp;
+
+        axis_z.position.x += yDisp;
+        axis_z.position.y += yDisp * (0.4);
+        axis_z.position.y -= xDisp;
+        prevX = event.clientX;
+        prevY = event.clientY;
+        render();
+
+    }
+
+
+    /**
+     * 点击X轴后拖动
+     * */
+    function onAxisXDrag(event) {
+        var xDisp = event.clientY - prevY;   //x方向上的位移,由于屏幕坐标和现实坐标相反需要变换
+        speedX = xDisp * 0.001;
+        if (speedX > 0) {
+            axis = new THREE.Vector3(1, 0, 0);
+        } else {
+            axis = new THREE.Vector3(-1, 0, 0);
+        }
+        render();
+        prevY = event.clientY;
+    }
+
+    /**
+     * 点击Y轴后拖动
+     * */
+    function onAxisYDrag(event) {
+        var yDisp = event.clientX - prevX;   //y方向上的位移,由于屏幕坐标和现实坐标相反需要变换
+        speedY = yDisp * 0.004;
+        if (speedY > 0) {
+            axis = new THREE.Vector3(0, 1, 0);
+        } else {
+            axis = new THREE.Vector3(0, -1, 0);
+        }
+        prevX = event.clientX;
+        render();
+    }
+
+
+    /**
+     * 点击Z轴后拖动
+     * */
+    function onAxisZDrag(event) {
+        var yDisp = event.clientX - prevX;   //y方向上的位移,由于屏幕坐标和现实坐标相反需要变换
+        speedY = yDisp * 0.004;
+        if (speedY > 0) {
+            axis = new THREE.Vector3(0, 0, -1);
+        } else {
+            axis = new THREE.Vector3(0, 0, 1);
+        }
+        prevX = event.clientX;
+        render();
+    }
+
+    /**
+     * 鼠标释放事件，清除事件监听，重置速度
+     * @param event
+     */
+    function onDocumentMouseUp(event) {
+        if (currSelectedObj === cube) {
+            document.removeEventListener('mousemove', onCubeDrag, false);
+            document.removeEventListener('mousewheel', onDocumentMouseWheel, false);
+        } else if (currSelectedObj === axis_x) {
+            document.removeEventListener('mousemove', onAxisXDrag, false);
+        } else if (currSelectedObj === axis_y) {
+            document.removeEventListener('mousemove', onAxisYDrag, false);
+        } else if (currSelectedObj === axis_z) {
+            document.removeEventListener('mousemove', onAxisZDrag, false);
+        }
+        if (typeof currSelectedObj != "undefined") {
+            document.removeEventListener('mouseup', onDocumentMouseUp, false);
+            document.removeEventListener('mouseout', onDocumentMouseOut, false);
+            currSelectedObj = undefined;
+        }
+        speedX = 0;
+        speedY = 0;
+        axis = undefined;
+        render();
+    }
+
+    /**
+     * 鼠标出界事件，清除事件监听，重置速度
+     * @param event
+     */
+    function onDocumentMouseOut(event) {
+        if (currSelectedObj === cube) {
+            document.removeEventListener('mousemove', onCubeDrag, false);
+            document.removeEventListener('mousewheel', onDocumentMouseWheel, false);
+        } else if (currSelectedObj === axis_x) {
+            document.removeEventListener('mousemove', onAxisXDrag, false);
+        } else if (currSelectedObj === axis_y) {
+            document.removeEventListener('mousemove', onAxisYDrag, false);
+        } else if (currSelectedObj === axis_z) {
+            document.removeEventListener('mousemove', onAxisZDrag, false);
+        }
+        if (typeof currSelectedObj != "undefined") {
+            document.removeEventListener('mouseup', onDocumentMouseUp, false);
+            document.removeEventListener('mouseout', onDocumentMouseOut, false);
+            currSelectedObj = undefined;
+        }
+        speedX = 0;
+        speedY = 0;
+        axis = undefined;
+        render();
+    }
+
+
+    function onDocumentMouseWheel(event) {
+        if (event.wheelDelta > 0) {
+            cube_Border_Axis_Group.scale.multiplyScalar(1.02);
+        } else {
+            cube_Border_Axis_Group.scale.multiplyScalar(0.98);
+        }
+        render();
+    }
+
+
+    /**
+     * 渲染函数
+     */
+
+    var render = function () {
+        if (typeof axis != "undefined") {   //如果点击了轴，则绕轴旋转
+            rotateAroundWorldAxis(cube_Border_Group, axis, Math.PI * 2 / 180);
+        }
+        renderer.render(scene, camera);
+    };
+
+
+    /**
+     * 旋转参考系
+     * @param object
+     * @param axis
+     * @param radians
+     */
+    function rotateAroundWorldAxis(object, axis, radians) {
+        rotWorldMatrix = new THREE.Matrix4();
+        rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+        // old code for Three.JS pre r54:
+        //  rotWorldMatrix.multiply(object.matrix);
+        // new code for Three.JS r55+:
+        rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+        object.matrix = rotWorldMatrix;
+
+        // old code for Three.js pre r49:
+        // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+        // old code for Three.js pre r59:
+        // object.rotation.setEulerFromRotationMatrix(object.matrix);
+        // code for r59+:
+        object.rotation.setFromRotationMatrix(object.matrix);
+    }
+
+
+    function run() {
+        initRenderer();
+        initCamera();
+        initScene();
+        initObj();
+        render();
+    }
+
+
+    run();
+</script>
+</body>
+</html>
