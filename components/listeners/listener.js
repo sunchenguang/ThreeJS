@@ -3,6 +3,8 @@
  */
 import manager from '../manager';
 import THREE from 'three';
+import Cube from '../cube';
+
 
 // function onDocumentMouseDown(event) {
 //
@@ -39,11 +41,25 @@ import THREE from 'three';
 //
 // }
 
+// Rotate an object around an arbitrary axis in world space
+function rotateAroundWorldAxis(object, axis, radians) {
+    rotWorldMatrix = new THREE.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+    object.matrix = rotWorldMatrix;
+
+    object.rotation.setFromRotationMatrix(object.matrix);
+}
+
 export default {
+
+
     onMouseMove(event){
         event.preventDefault();
 
-        console.log('mousemove-----------')
+        // console.log('mousemove-----------')
 
         manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
@@ -53,15 +69,35 @@ export default {
 
         if (manager.SELECTED) {
             //
-            let intersects = manager.raycaster.intersectObject(manager.SELECTED);
-            if (intersects.length > 0) {
-                let intersection = intersects[0].point;
+            let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+            let intersection;
+            // console.log(plane)
+
+            // let intersects = manager.raycaster.intersectObject(manager.SELECTED);
+            let intersects = manager.raycaster.ray.intersectPlane(plane, intersection);
+            console.log(intersects)
+            if (intersects) {
+                // let intersection = intersects[0].point;
                 if (manager.SELECTED.name == "cube") {
                     // 物体随鼠标移动 group中心=交点-偏移
-                    console.log(manager)
+                    // console.log(manager)
 
-                    manager.allObjectsGroup.position.copy(intersection.sub(manager.offset));
+                    manager.allObjectsGroup.position.copy(intersects.sub(manager.offset));
                 }
+
+                if (/^x[Cube|Cylinder|Line]/.test(manager.SELECTED.name)) {
+                    console.log('x AXIS---')
+                    // console.log(this)
+                    manager.distanceY = event.clientY - manager.prevY;
+                    manager.speedY = manager.distanceY * 0.01;
+                    // 第一次点击移动时不旋转
+                    if (manager.prevY != 0) {
+                        Cube.rotateAroundWorldAxis(manager.objects[0], manager.xAxis, manager.speedY);
+                    }
+                    manager.prevY = event.clientY;
+                }
+
+
             }
 
 
@@ -72,7 +108,7 @@ export default {
     onMouseDown(event){
         event.preventDefault();
 
-        console.log('mousedown')
+        // console.log('mousedown')
 
         manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
@@ -83,7 +119,7 @@ export default {
 
 
         if (intersects.length > 0) {
-            console.log(intersects)
+            // console.log(intersects)
             let chosen = null;
 
             manager.controls.enabled = false;
@@ -109,7 +145,7 @@ export default {
 
             manager.offset.copy(manager.intersection).sub(manager.allObjectsGroup.position);
 
-            console.log(manager)
+            // console.log(manager)
 
             // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
             //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
@@ -126,6 +162,12 @@ export default {
         event.preventDefault();
 
         manager.controls.enabled = true;
+
+
+        manager.speedX = 0;
+        manager.speedY = 0;
+        manager.prevX = 0;
+        manager.prevY = 0;
 
         // if (INTERSECTED) {
 

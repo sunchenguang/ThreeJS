@@ -20,21 +20,19 @@
     var container, stats;
     var camera, controls, scene, renderer, xLine, yLine, zLine, rotWorldMatrix;
     var objects = [];
-    var plane = new THREE.Plane();
     var raycaster = new THREE.Raycaster();
-    var mouse = new THREE.Vector2(),
-            offset = new THREE.Vector3(),
-            intersection = new THREE.Vector3(),
-            INTERSECTED, SELECTED;
+    var mouse = new THREE.Vector3(), prevMouse = new THREE.Vector3(0, 0, 0),
+            offset = new THREE.Vector3(), SELECTED;
     var width = window.innerWidth,
-            height = window.innerHeight, distanceX = 0, distanceY = 0, speedX = 0, speedY = 0, prevX = 0, prevY = 0;
+            height = window.innerHeight, distanceX = 0, distanceY = 0, speedX = 0, speedY = 0;
 
     var xAxis = new THREE.Vector3(1, 0, 0), yAxis = new THREE.Vector3(0, 1, 0), zAxis = new THREE.Vector3(0, 0, 1);
     var xLineColor = 0xFF0000, yLineColor = 0x008000, zLineColor = 0x0000FF;
-    var cube, xCube, yCube, zCube, frameGeometry, scaleController, scaleYDistance = 0, scalePrevY = 0;
+    var cube, xCube, yCube, zCube, frameGeometry, scaleController, scaleYDistance = 0;
 
     var allObjectsGroup = new THREE.Group();
     var axisGroup = new THREE.Group();
+    var xCylinder, yCylinder, zCylinder, xText, yText, zText;
 
 
     // 初始化统计器
@@ -122,13 +120,16 @@
     function initExternalCube() {
         var geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
         var xMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff0000
+            color: 0xff0000,
+            depthTest: false
         });
         var yMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff00
+            color: 0x00ff00,
+            depthTest: false
         });
         var zMaterial = new THREE.MeshBasicMaterial({
-            color: 0x0000ff
+            color: 0x0000ff,
+            depthTest: false
         });
 
         xCube = new THREE.Mesh(geometry, xMaterial);
@@ -140,7 +141,97 @@
         yCube.position.copy(yLine.geometry.vertices[1]);
         zCube.position.copy(zLine.geometry.vertices[1]);
 
+        xCube.name = "xCube";
+        yCube.name = "yCube";
+        zCube.name = "zCube";
+    }
+    function addText() {
+        xText = makeTextSprite('X', {
+            fontsize: 60
+        });
+        yText = makeTextSprite('Y', {
+            fontsize: 60
+        });
+        zText = makeTextSprite('Z', {
+            fontsize: 60
+        });
 
+        yText.position.set(0, 1, -0.6);
+        xText.position.set(1.5, -0.6, -0.6);
+        zText.position.set(0.5, 0, 1.5);
+
+
+        xText.name = "xText";
+        yText.name = "yText";
+        zText.name = "zText";
+
+    }
+
+
+    function addCylinder() {
+        var geometry = new THREE.CylinderGeometry(0.25, 0.25, 1, 32);
+        var material = new THREE.MeshBasicMaterial({
+            visible: false
+//            color: 0xffff00,
+//            depthTest: false
+        });
+        xCylinder = new THREE.Mesh(geometry, material);
+        yCylinder = new THREE.Mesh(geometry, material);
+        zCylinder = new THREE.Mesh(geometry, material);
+
+        xCylinder.name = "xCylinder";
+        yCylinder.name = "yCylinder";
+        zCylinder.name = "zCylinder";
+
+
+        xCylinder.position.copy(new THREE.Vector3(xLine.geometry.vertices[1].x / 2 + 0.2, 0, 0));
+        yCylinder.position.copy(new THREE.Vector3(0, yLine.geometry.vertices[1].y / 2 + 0.2, 0));
+        zCylinder.position.copy(new THREE.Vector3(0, 0, zLine.geometry.vertices[1].z / 2 + 0.2));
+
+        xCylinder = xCylinder.rotateZ(Math.PI / 2);
+        yCylinder = yCylinder;
+        zCylinder = zCylinder.rotateX(Math.PI / 2);
+
+
+        objects.push(xCylinder, yCylinder, zCylinder);
+
+    }
+    /**
+     * 创建永远面向相机的2D文字
+     * */
+    function makeTextSprite(message, parameters) {
+        if (parameters === undefined) parameters = {};
+        var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+        var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+        var textColor = parameters.hasOwnProperty("textColor") ? parameters["textColor"] : {r: 0, g: 0, b: 0, a: 1.0};
+
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        context.font = "Bold " + fontsize + "px " + fontface;
+        var metrics = context.measureText(message);
+        var textWidth = metrics.width;
+
+        context.lineWidth = borderThickness;
+
+        context.fillStyle = "rgba(" + textColor.r + ", " + textColor.g + ", " + textColor.b + ", 1.0)";
+        context.fillText(message, borderThickness, fontsize + borderThickness);
+
+        var texture = new THREE.Texture(canvas)
+        texture.needsUpdate = true;
+        //过滤警告
+        texture.minFilter = THREE.LinearFilter;
+
+        var spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            depthTest: false
+//            useScreenCoordinates: false
+        });
+        var sprite = new THREE.Sprite(spriteMaterial);
+//        sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+        sprite.scale.set(1, 1, 1);
+
+        return sprite;
     }
 
 
@@ -160,7 +251,7 @@
         }
         var point = point ? point : {x: 0, y: 0, z: 0};
         var pointX = point.x, pointY = point.y, pointZ = point.z;
-        var lineLength = 2;
+        var lineLength = 1.5;
 
 
         xLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
@@ -171,7 +262,7 @@
         yLine.name = "yLine";
         zLine.name = "zLine";
 
-        objects.push(xLine, yLine, zLine);
+//        objects.push(xLine, yLine, zLine);
     }
 
     function onWindowResize() {
@@ -300,7 +391,9 @@
             depthTest: false
         }));
         scaleController.name = 'scaleController';
-        cube.add(scaleController);
+
+
+//        cube.add(scaleController);
         objects.push(scaleController);
 
     }
@@ -313,92 +406,116 @@
         //得到当前鼠标于三维的x,y坐标
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+        mouse.z = 0.5;
 
         raycaster.setFromCamera(mouse, camera);
 
         if (SELECTED) {
-            // 只有选中正方体才移动
-            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'cube') {
-                // 物体随鼠标移动 group中心=交点-偏移
-                allObjectsGroup.position.copy(intersection.sub(offset));
-                console.log(plane);
-            }
+            switch (SELECTED.name) {
+                case 'cube':
+                    // mouse.unproject(camera);可以得到一个射线指向你想要的方向,mouse的x,y,z值更新
+                    //mouse坐标-固定的偏移量=物体位置
+                    mouse.unproject(camera);
+                    allObjectsGroup.position.copy(mouse.sub(offset));
+                    break;
 
-            // 选中x轴线时
-            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'xLine') {
-                distanceY = event.clientY - prevY;
-                speedY = distanceY * 0.01;
-                // 第一次点击移动时不旋转
-                if (prevY != 0) {
-                    rotateAroundWorldAxis(objects[0], xAxis, speedY);
-                }
-                prevY = event.clientY;
-            }
+                case 'xCylinder':
+                    mouse.unproject(camera);
+                    distanceY = mouse.y - prevMouse.y;
+                    speedY = distanceY;
 
-            // 选中y轴线时
-            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'yLine') {
-                distanceX = event.clientX - prevX;
-                speedX = distanceX * 0.01;
-                // 第一次点击移动时不旋转
-                if (prevX != 0) {
-                    rotateAroundWorldAxis(objects[0], yAxis, speedX);
+                    // 第一次点击移动时不旋转
+                    if (prevMouse.y != 0) {
+                        rotateAroundWorldAxis(objects[0], xAxis, -speedY);
+                    }
+                    prevMouse.copy(mouse);
 
-                }
-                prevX = event.clientX;
-            }
-            // 选中z轴线时
-            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'zLine') {
-                distanceY = event.clientY - prevY;
-                speedY = distanceY * 0.01;
-                // 第一次点击移动时不旋转
-                if (prevY != 0) {
-                    rotateAroundWorldAxis(objects[0], zAxis, -speedY);
+                    break;
 
-                }
-                prevY = event.clientY;
-            }
-            // 选中中心立方体时
-            if (raycaster.ray.intersectPlane(plane, intersection) && SELECTED.name === 'scaleController') {
-                scaleYDistance = event.clientY - scalePrevY;
-                if (scalePrevY != 0) {
-                    if (scaleYDistance > 0) {
-                        allObjectsGroup.scale.multiplyScalar(1.02);
-                        axisGroup.scale.divideScalar(1.02);
-                    } else {
-                        if (allObjectsGroup.scale.x > 0.5) {
-                            allObjectsGroup.scale.multiplyScalar(0.98);
-                            axisGroup.scale.divideScalar(0.98);
+
+                case 'yCylinder':
+                    mouse.unproject(camera);
+                    distanceX = mouse.x - prevMouse.x;
+                    speedX = distanceX;
+
+                    // 第一次点击移动时不旋转
+                    if (prevMouse.x != 0) {
+                        rotateAroundWorldAxis(objects[0], yAxis, speedX);
+                    }
+                    prevMouse.copy(mouse);
+                    break;
+
+                case 'zCylinder':
+                    mouse.unproject(camera);
+                    distanceY = mouse.y - prevMouse.y;
+                    speedY = distanceY;
+
+                    // 第一次点击移动时不旋转
+                    if (prevMouse.y != 0) {
+                        rotateAroundWorldAxis(objects[0], zAxis, speedY);
+                    }
+                    prevMouse.copy(mouse);
+
+
+                    break;
+
+                case 'scaleController':
+                    mouse.unproject(camera);
+                    scaleYDistance = -(mouse.y - prevMouse.y);
+
+                    if (prevMouse.y != 0) {
+                        if (scaleYDistance > 0 && allObjectsGroup.scale.x < 2) {
+                            allObjectsGroup.scale.multiplyScalar(1.02);
+                            axisGroup.scale.divideScalar(1.02);
+                        } else {
+                            if (allObjectsGroup.scale.x > 0.3) {
+                                allObjectsGroup.scale.multiplyScalar(0.98);
+                                axisGroup.scale.divideScalar(0.98);
+                            }
                         }
                     }
-                }
-                scalePrevY = event.clientY;
+                    prevMouse.copy(mouse);
 
 
+                    break;
+                default:
+                    console.log('mouse move select error')
             }
 
 
             return;
         }
+
         var intersects = raycaster.intersectObjects(objects);
-        if (intersects.length > 0) {
-            if (INTERSECTED != intersects[0].object) {
-                if (INTERSECTED) {
-                    INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-                }
-                INTERSECTED = intersects[0].object;
-                INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
-                plane.setFromNormalAndCoplanarPoint(
-                        camera.getWorldDirection(plane.normal),
-                        INTERSECTED.position);
-            }
-            container.style.cursor = 'pointer';
-        } else {
-            if (INTERSECTED) {
-                INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-            }
-            INTERSECTED = null;
-            container.style.cursor = 'auto';
-        }
+
+        // 完成鼠标与线相交 线变色及创建plane的功能
+//        if (intersects.length > 0) {
+//            INTERSECTED = intersects[0].object;
+//            for (var i = 0; i < intersects.length; i++) {
+//                if (/^[x|y|z]Line$/.test(intersects[i].object.name)) {
+//                    INTERSECTED = intersects[i].object;
+//                }
+//            }
+//
+//            if (INTERSECTED && INTERSECTED.name != "cube") {
+//                INTERSECTED.material.color.setHex(0xffffff);
+//            } else {
+//                xLine.material.color.setHex(0xff0000);
+//                yLine.material.color.setHex(0x00ff00);
+//                zLine.material.color.setHex(0x0000ff);
+//
+//                plane.setFromNormalAndCoplanarPoint(
+//                        camera.getWorldDirection(plane.normal),
+//                        INTERSECTED.position);
+//            }
+//            container.style.cursor = 'pointer';
+//
+//        } else {
+//            INTERSECTED = null;
+//            container.style.cursor = 'auto';
+//        }
+
+
     }
     function onDocumentMouseDown(event) {
 
@@ -412,25 +529,24 @@
             controls.enabled = false;
 
             SELECTED = intersects[0].object;
-            intersects.forEach(function (item, index) {
-                if (item.object == cube) {
-                    SELECTED = cube;
+
+            //当与射线相交的物体中有坐标轴体或中心立方体时优先选中
+            for (var i = 0; i < intersects.length; i++) {
+                if (/^[x|y|z]Cylinder$/.test(intersects[i].object.name)) {
+                    SELECTED = intersects[i].object;
+                    break;
                 }
-                if (item.object == scaleController) {
-                    SELECTED = scaleController;
+                if (/^scaleController$/.test(intersects[i].object.name)) {
+                    SELECTED = intersects[i].object;
+                    break;
                 }
 
-
-            });
-
-
-            if (raycaster.ray.intersectPlane(plane, intersection)) {
-                //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-                offset.copy(intersection).sub(allObjectsGroup.position);
             }
 
-            container.style.cursor = 'move';
-
+            //更新mouse位置
+            mouse.unproject(camera);
+            //鼠标位置-物体位置=偏移量
+            offset.copy(mouse).sub(allObjectsGroup.position);
         }
 
     }
@@ -441,23 +557,17 @@
 
         controls.enabled = true;
 
-        if (INTERSECTED) {
-
-            SELECTED = null;
-
-        }
+        SELECTED = null;
 
 
         container.style.cursor = 'auto';
 
-//        offset = new THREE.Vector3();
 
         speedX = 0;
         speedY = 0;
-        prevX = 0;
-        prevY = 0;
 
-        scalePrevY = 0;
+
+        prevMouse = new THREE.Vector3(0, 0, 0);
 
 
     }
@@ -487,20 +597,24 @@
         initCamera();
         initScene();
         initLight();
-//        initGrid();
         initObject();
         initControls();
         initAxisLine();
-        initExternalCube();
+        addText();
 
+        addCylinder();
 
         axisGroup.add(xLine);
         axisGroup.add(yLine);
         axisGroup.add(zLine);
+        axisGroup.add(xText);
+        axisGroup.add(yText);
+        axisGroup.add(zText);
+        axisGroup.add(xCylinder);
+        axisGroup.add(yCylinder);
+        axisGroup.add(zCylinder);
 
-        axisGroup.add(xCube);
-        axisGroup.add(yCube);
-        axisGroup.add(zCube);
+        axisGroup.add(scaleController);
 
         allObjectsGroup.add(cube);
         allObjectsGroup.add(axisGroup);
@@ -510,7 +624,6 @@
         animate();
 
     }
-
 
     threeStart();
 

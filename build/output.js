@@ -138,6 +138,15 @@
 	        this.intersection = new _three2.default.Vector3();
 	        this.INTERSECTED = null;
 	        this.SELECTED = null;
+	        this.prevX = 0;
+	        this.prevY = 0;
+	        this.distanceX = 0;
+	        this.distanceY = 0;
+	        this.speedX = 0;
+	        this.speedY = 0;
+	        this.xAxis = new _three2.default.Vector3(1, 0, 0);
+	        this.yAxis = new _three2.default.Vector3(0, 1, 0);
+	        this.zAxis = new _three2.default.Vector3(0, 0, 1);
 
 	        this.allObjectsGroup = new _three2.default.Group();
 	        this.axisGroup = new _three2.default.Group();
@@ -229,9 +238,9 @@
 	            this.controls.dynamicDampingFactor = 0.3;
 
 	            // 绑定事件
-	            this.renderer.domElement.addEventListener('mousemove', _listener2.default.onMouseMove.bind(this), false);
-	            this.renderer.domElement.addEventListener('mousedown', _listener2.default.onMouseDown.bind(this), false);
-	            this.renderer.domElement.addEventListener('mouseup', _listener2.default.onMouseUp.bind(this), false);
+	            this.renderer.domElement.addEventListener('mousemove', _listener2.default.onMouseMove, false);
+	            this.renderer.domElement.addEventListener('mousedown', _listener2.default.onMouseDown, false);
+	            this.renderer.domElement.addEventListener('mouseup', _listener2.default.onMouseUp, false);
 
 	            window.addEventListener('resize', _listener2.default.onWindowResize.bind(this), false);
 	        }
@@ -42361,545 +42370,545 @@
 
 	_three2.default.TrackballControls = function (object, domElement) {
 
-			var _this = this;
-			var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+		var _this = this;
+		var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
 
-			this.object = object;
-			this.domElement = domElement !== undefined ? domElement : document;
+		this.object = object;
+		this.domElement = domElement !== undefined ? domElement : document;
 
-			// API
+		// API
 
-			this.enabled = true;
+		this.enabled = true;
 
-			this.screen = { left: 0, top: 0, width: 0, height: 0 };
+		this.screen = { left: 0, top: 0, width: 0, height: 0 };
 
-			this.rotateSpeed = 1.0;
-			this.zoomSpeed = 1.2;
-			this.panSpeed = 0.3;
+		this.rotateSpeed = 1.0;
+		this.zoomSpeed = 1.2;
+		this.panSpeed = 0.3;
 
-			this.noRotate = false;
-			this.noZoom = false;
-			this.noPan = false;
+		this.noRotate = false;
+		this.noZoom = false;
+		this.noPan = false;
 
-			this.staticMoving = false;
-			this.dynamicDampingFactor = 0.2;
+		this.staticMoving = false;
+		this.dynamicDampingFactor = 0.2;
 
-			this.minDistance = 0;
-			this.maxDistance = Infinity;
+		this.minDistance = 0;
+		this.maxDistance = Infinity;
 
-			this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
+		this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
 
-			// internals
+		// internals
 
-			this.target = new _three2.default.Vector3();
+		this.target = new _three2.default.Vector3();
 
-			var EPS = 0.000001;
+		var EPS = 0.000001;
 
-			var lastPosition = new _three2.default.Vector3();
+		var lastPosition = new _three2.default.Vector3();
 
-			var _state = STATE.NONE,
-			    _prevState = STATE.NONE,
-			    _eye = new _three2.default.Vector3(),
-			    _movePrev = new _three2.default.Vector2(),
-			    _moveCurr = new _three2.default.Vector2(),
-			    _lastAxis = new _three2.default.Vector3(),
-			    _lastAngle = 0,
-			    _zoomStart = new _three2.default.Vector2(),
-			    _zoomEnd = new _three2.default.Vector2(),
-			    _touchZoomDistanceStart = 0,
-			    _touchZoomDistanceEnd = 0,
-			    _panStart = new _three2.default.Vector2(),
-			    _panEnd = new _three2.default.Vector2();
+		var _state = STATE.NONE,
+		    _prevState = STATE.NONE,
+		    _eye = new _three2.default.Vector3(),
+		    _movePrev = new _three2.default.Vector2(),
+		    _moveCurr = new _three2.default.Vector2(),
+		    _lastAxis = new _three2.default.Vector3(),
+		    _lastAngle = 0,
+		    _zoomStart = new _three2.default.Vector2(),
+		    _zoomEnd = new _three2.default.Vector2(),
+		    _touchZoomDistanceStart = 0,
+		    _touchZoomDistanceEnd = 0,
+		    _panStart = new _three2.default.Vector2(),
+		    _panEnd = new _three2.default.Vector2();
 
-			// for reset
+		// for reset
 
-			this.target0 = this.target.clone();
-			this.position0 = this.object.position.clone();
-			this.up0 = this.object.up.clone();
+		this.target0 = this.target.clone();
+		this.position0 = this.object.position.clone();
+		this.up0 = this.object.up.clone();
 
-			// events
+		// events
 
-			var changeEvent = { type: 'change' };
-			var startEvent = { type: 'start' };
-			var endEvent = { type: 'end' };
+		var changeEvent = { type: 'change' };
+		var startEvent = { type: 'start' };
+		var endEvent = { type: 'end' };
 
-			// methods
+		// methods
 
-			this.handleResize = function () {
+		this.handleResize = function () {
 
-					if (this.domElement === document) {
+			if (this.domElement === document) {
 
-							this.screen.left = 0;
-							this.screen.top = 0;
-							this.screen.width = window.innerWidth;
-							this.screen.height = window.innerHeight;
+				this.screen.left = 0;
+				this.screen.top = 0;
+				this.screen.width = window.innerWidth;
+				this.screen.height = window.innerHeight;
+			} else {
+
+				var box = this.domElement.getBoundingClientRect();
+				// adjustments come from similar code in the jquery offset() function
+				var d = this.domElement.ownerDocument.documentElement;
+				this.screen.left = box.left + window.pageXOffset - d.clientLeft;
+				this.screen.top = box.top + window.pageYOffset - d.clientTop;
+				this.screen.width = box.width;
+				this.screen.height = box.height;
+			}
+		};
+
+		this.handleEvent = function (event) {
+
+			if (typeof this[event.type] == 'function') {
+
+				this[event.type](event);
+			}
+		};
+
+		var getMouseOnScreen = function () {
+
+			var vector = new _three2.default.Vector2();
+
+			return function getMouseOnScreen(pageX, pageY) {
+
+				vector.set((pageX - _this.screen.left) / _this.screen.width, (pageY - _this.screen.top) / _this.screen.height);
+
+				return vector;
+			};
+		}();
+
+		var getMouseOnCircle = function () {
+
+			var vector = new _three2.default.Vector2();
+
+			return function getMouseOnCircle(pageX, pageY) {
+
+				vector.set((pageX - _this.screen.width * 0.5 - _this.screen.left) / (_this.screen.width * 0.5), (_this.screen.height + 2 * (_this.screen.top - pageY)) / _this.screen.width);
+
+				return vector;
+			};
+		}();
+
+		this.rotateCamera = function () {
+
+			var axis = new _three2.default.Vector3(),
+			    quaternion = new _three2.default.Quaternion(),
+			    eyeDirection = new _three2.default.Vector3(),
+			    objectUpDirection = new _three2.default.Vector3(),
+			    objectSidewaysDirection = new _three2.default.Vector3(),
+			    moveDirection = new _three2.default.Vector3(),
+			    angle;
+
+			return function rotateCamera() {
+
+				moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
+				angle = moveDirection.length();
+
+				if (angle) {
+
+					_eye.copy(_this.object.position).sub(_this.target);
+
+					eyeDirection.copy(_eye).normalize();
+					objectUpDirection.copy(_this.object.up).normalize();
+					objectSidewaysDirection.crossVectors(objectUpDirection, eyeDirection).normalize();
+
+					objectUpDirection.setLength(_moveCurr.y - _movePrev.y);
+					objectSidewaysDirection.setLength(_moveCurr.x - _movePrev.x);
+
+					moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
+
+					axis.crossVectors(moveDirection, _eye).normalize();
+
+					angle *= _this.rotateSpeed;
+					quaternion.setFromAxisAngle(axis, angle);
+
+					_eye.applyQuaternion(quaternion);
+					_this.object.up.applyQuaternion(quaternion);
+
+					_lastAxis.copy(axis);
+					_lastAngle = angle;
+				} else if (!_this.staticMoving && _lastAngle) {
+
+					_lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
+					_eye.copy(_this.object.position).sub(_this.target);
+					quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
+					_eye.applyQuaternion(quaternion);
+					_this.object.up.applyQuaternion(quaternion);
+				}
+
+				_movePrev.copy(_moveCurr);
+			};
+		}();
+
+		this.zoomCamera = function () {
+
+			var factor;
+
+			if (_state === STATE.TOUCH_ZOOM_PAN) {
+
+				factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
+				_touchZoomDistanceStart = _touchZoomDistanceEnd;
+				_eye.multiplyScalar(factor);
+			} else {
+
+				factor = 1.0 + (_zoomEnd.y - _zoomStart.y) * _this.zoomSpeed;
+
+				if (factor !== 1.0 && factor > 0.0) {
+
+					_eye.multiplyScalar(factor);
+
+					if (_this.staticMoving) {
+
+						_zoomStart.copy(_zoomEnd);
 					} else {
 
-							var box = this.domElement.getBoundingClientRect();
-							// adjustments come from similar code in the jquery offset() function
-							var d = this.domElement.ownerDocument.documentElement;
-							this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-							this.screen.top = box.top + window.pageYOffset - d.clientTop;
-							this.screen.width = box.width;
-							this.screen.height = box.height;
+						_zoomStart.y += (_zoomEnd.y - _zoomStart.y) * this.dynamicDampingFactor;
 					}
-			};
+				}
+			}
+		};
 
-			this.handleEvent = function (event) {
+		this.panCamera = function () {
 
-					if (typeof this[event.type] == 'function') {
+			var mouseChange = new _three2.default.Vector2(),
+			    objectUp = new _three2.default.Vector3(),
+			    pan = new _three2.default.Vector3();
 
-							this[event.type](event);
-					}
-			};
+			return function panCamera() {
 
-			var getMouseOnScreen = function () {
+				mouseChange.copy(_panEnd).sub(_panStart);
 
-					var vector = new _three2.default.Vector2();
+				if (mouseChange.lengthSq()) {
 
-					return function getMouseOnScreen(pageX, pageY) {
+					mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
 
-							vector.set((pageX - _this.screen.left) / _this.screen.width, (pageY - _this.screen.top) / _this.screen.height);
+					pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
+					pan.add(objectUp.copy(_this.object.up).setLength(mouseChange.y));
 
-							return vector;
-					};
-			}();
+					_this.object.position.add(pan);
+					_this.target.add(pan);
 
-			var getMouseOnCircle = function () {
+					if (_this.staticMoving) {
 
-					var vector = new _three2.default.Vector2();
-
-					return function getMouseOnCircle(pageX, pageY) {
-
-							vector.set((pageX - _this.screen.width * 0.5 - _this.screen.left) / (_this.screen.width * 0.5), (_this.screen.height + 2 * (_this.screen.top - pageY)) / _this.screen.width);
-
-							return vector;
-					};
-			}();
-
-			this.rotateCamera = function () {
-
-					var axis = new _three2.default.Vector3(),
-					    quaternion = new _three2.default.Quaternion(),
-					    eyeDirection = new _three2.default.Vector3(),
-					    objectUpDirection = new _three2.default.Vector3(),
-					    objectSidewaysDirection = new _three2.default.Vector3(),
-					    moveDirection = new _three2.default.Vector3(),
-					    angle;
-
-					return function rotateCamera() {
-
-							moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
-							angle = moveDirection.length();
-
-							if (angle) {
-
-									_eye.copy(_this.object.position).sub(_this.target);
-
-									eyeDirection.copy(_eye).normalize();
-									objectUpDirection.copy(_this.object.up).normalize();
-									objectSidewaysDirection.crossVectors(objectUpDirection, eyeDirection).normalize();
-
-									objectUpDirection.setLength(_moveCurr.y - _movePrev.y);
-									objectSidewaysDirection.setLength(_moveCurr.x - _movePrev.x);
-
-									moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
-
-									axis.crossVectors(moveDirection, _eye).normalize();
-
-									angle *= _this.rotateSpeed;
-									quaternion.setFromAxisAngle(axis, angle);
-
-									_eye.applyQuaternion(quaternion);
-									_this.object.up.applyQuaternion(quaternion);
-
-									_lastAxis.copy(axis);
-									_lastAngle = angle;
-							} else if (!_this.staticMoving && _lastAngle) {
-
-									_lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
-									_eye.copy(_this.object.position).sub(_this.target);
-									quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
-									_eye.applyQuaternion(quaternion);
-									_this.object.up.applyQuaternion(quaternion);
-							}
-
-							_movePrev.copy(_moveCurr);
-					};
-			}();
-
-			this.zoomCamera = function () {
-
-					var factor;
-
-					if (_state === STATE.TOUCH_ZOOM_PAN) {
-
-							factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-							_touchZoomDistanceStart = _touchZoomDistanceEnd;
-							_eye.multiplyScalar(factor);
+						_panStart.copy(_panEnd);
 					} else {
 
-							factor = 1.0 + (_zoomEnd.y - _zoomStart.y) * _this.zoomSpeed;
-
-							if (factor !== 1.0 && factor > 0.0) {
-
-									_eye.multiplyScalar(factor);
-
-									if (_this.staticMoving) {
-
-											_zoomStart.copy(_zoomEnd);
-									} else {
-
-											_zoomStart.y += (_zoomEnd.y - _zoomStart.y) * this.dynamicDampingFactor;
-									}
-							}
+						_panStart.add(mouseChange.subVectors(_panEnd, _panStart).multiplyScalar(_this.dynamicDampingFactor));
 					}
+				}
 			};
+		}();
 
-			this.panCamera = function () {
+		this.checkDistances = function () {
 
-					var mouseChange = new _three2.default.Vector2(),
-					    objectUp = new _three2.default.Vector3(),
-					    pan = new _three2.default.Vector3();
+			if (!_this.noZoom || !_this.noPan) {
 
-					return function panCamera() {
+				if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
 
-							mouseChange.copy(_panEnd).sub(_panStart);
+					_this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
+					_zoomStart.copy(_zoomEnd);
+				}
 
-							if (mouseChange.lengthSq()) {
+				if (_eye.lengthSq() < _this.minDistance * _this.minDistance) {
 
-									mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
+					_this.object.position.addVectors(_this.target, _eye.setLength(_this.minDistance));
+					_zoomStart.copy(_zoomEnd);
+				}
+			}
+		};
 
-									pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
-									pan.add(objectUp.copy(_this.object.up).setLength(mouseChange.y));
+		this.update = function () {
 
-									_this.object.position.add(pan);
-									_this.target.add(pan);
+			_eye.subVectors(_this.object.position, _this.target);
 
-									if (_this.staticMoving) {
+			if (!_this.noRotate) {
 
-											_panStart.copy(_panEnd);
-									} else {
-
-											_panStart.add(mouseChange.subVectors(_panEnd, _panStart).multiplyScalar(_this.dynamicDampingFactor));
-									}
-							}
-					};
-			}();
-
-			this.checkDistances = function () {
-
-					if (!_this.noZoom || !_this.noPan) {
-
-							if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
-
-									_this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
-									_zoomStart.copy(_zoomEnd);
-							}
-
-							if (_eye.lengthSq() < _this.minDistance * _this.minDistance) {
-
-									_this.object.position.addVectors(_this.target, _eye.setLength(_this.minDistance));
-									_zoomStart.copy(_zoomEnd);
-							}
-					}
-			};
-
-			this.update = function () {
-
-					_eye.subVectors(_this.object.position, _this.target);
-
-					if (!_this.noRotate) {
-
-							_this.rotateCamera();
-					}
-
-					if (!_this.noZoom) {
-
-							_this.zoomCamera();
-					}
-
-					if (!_this.noPan) {
-
-							_this.panCamera();
-					}
-
-					_this.object.position.addVectors(_this.target, _eye);
-
-					_this.checkDistances();
-
-					_this.object.lookAt(_this.target);
-
-					if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
-
-							_this.dispatchEvent(changeEvent);
-
-							lastPosition.copy(_this.object.position);
-					}
-			};
-
-			this.reset = function () {
-
-					_state = STATE.NONE;
-					_prevState = STATE.NONE;
-
-					_this.target.copy(_this.target0);
-					_this.object.position.copy(_this.position0);
-					_this.object.up.copy(_this.up0);
-
-					_eye.subVectors(_this.object.position, _this.target);
-
-					_this.object.lookAt(_this.target);
-
-					_this.dispatchEvent(changeEvent);
-
-					lastPosition.copy(_this.object.position);
-			};
-
-			// listeners
-
-			function keydown(event) {
-
-					if (_this.enabled === false) return;
-
-					window.removeEventListener('keydown', keydown);
-
-					_prevState = _state;
-
-					if (_state !== STATE.NONE) {
-
-							return;
-					} else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
-
-							_state = STATE.ROTATE;
-					} else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
-
-							_state = STATE.ZOOM;
-					} else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
-
-							_state = STATE.PAN;
-					}
+				_this.rotateCamera();
 			}
 
-			function keyup(event) {
+			if (!_this.noZoom) {
 
-					if (_this.enabled === false) return;
-
-					_state = _prevState;
-
-					window.addEventListener('keydown', keydown, false);
+				_this.zoomCamera();
 			}
 
-			function mousedown(event) {
+			if (!_this.noPan) {
 
-					if (_this.enabled === false) return;
-
-					event.preventDefault();
-					event.stopPropagation();
-
-					if (_state === STATE.NONE) {
-
-							_state = event.button;
-					}
-
-					if (_state === STATE.ROTATE && !_this.noRotate) {
-
-							_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-							_movePrev.copy(_moveCurr);
-					} else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-							_zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-							_zoomEnd.copy(_zoomStart);
-					} else if (_state === STATE.PAN && !_this.noPan) {
-
-							_panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-							_panEnd.copy(_panStart);
-					}
-
-					document.addEventListener('mousemove', mousemove, false);
-					document.addEventListener('mouseup', mouseup, false);
-
-					_this.dispatchEvent(startEvent);
+				_this.panCamera();
 			}
 
-			function mousemove(event) {
+			_this.object.position.addVectors(_this.target, _eye);
 
-					if (_this.enabled === false) return;
+			_this.checkDistances();
 
-					event.preventDefault();
-					event.stopPropagation();
+			_this.object.lookAt(_this.target);
 
-					if (_state === STATE.ROTATE && !_this.noRotate) {
+			if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
 
-							_movePrev.copy(_moveCurr);
-							_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-					} else if (_state === STATE.ZOOM && !_this.noZoom) {
+				_this.dispatchEvent(changeEvent);
 
-							_zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-					} else if (_state === STATE.PAN && !_this.noPan) {
-
-							_panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-					}
+				lastPosition.copy(_this.object.position);
 			}
+		};
 
-			function mouseup(event) {
+		this.reset = function () {
 
-					if (_this.enabled === false) return;
+			_state = STATE.NONE;
+			_prevState = STATE.NONE;
 
-					event.preventDefault();
-					event.stopPropagation();
+			_this.target.copy(_this.target0);
+			_this.object.position.copy(_this.position0);
+			_this.object.up.copy(_this.up0);
 
-					_state = STATE.NONE;
+			_eye.subVectors(_this.object.position, _this.target);
 
-					document.removeEventListener('mousemove', mousemove);
-					document.removeEventListener('mouseup', mouseup);
-					_this.dispatchEvent(endEvent);
+			_this.object.lookAt(_this.target);
+
+			_this.dispatchEvent(changeEvent);
+
+			lastPosition.copy(_this.object.position);
+		};
+
+		// listeners
+
+		function keydown(event) {
+
+			if (_this.enabled === false) return;
+
+			window.removeEventListener('keydown', keydown);
+
+			_prevState = _state;
+
+			if (_state !== STATE.NONE) {
+
+				return;
+			} else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
+
+				_state = STATE.ROTATE;
+			} else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
+
+				_state = STATE.ZOOM;
+			} else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
+
+				_state = STATE.PAN;
 			}
+		}
 
-			function mousewheel(event) {
+		function keyup(event) {
 
-					if (_this.enabled === false) return;
+			if (_this.enabled === false) return;
 
-					event.preventDefault();
-					event.stopPropagation();
-
-					var delta = 0;
-
-					if (event.wheelDelta) {
-
-							// WebKit / Opera / Explorer 9
-
-							delta = event.wheelDelta / 40;
-					} else if (event.detail) {
-
-							// Firefox
-
-							delta = -event.detail / 3;
-					}
-
-					_zoomStart.y += delta * 0.01;
-					_this.dispatchEvent(startEvent);
-					_this.dispatchEvent(endEvent);
-			}
-
-			function touchstart(event) {
-
-					if (_this.enabled === false) return;
-
-					switch (event.touches.length) {
-
-							case 1:
-									_state = STATE.TOUCH_ROTATE;
-									_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-									_movePrev.copy(_moveCurr);
-									break;
-
-							default:
-									// 2 or more
-									_state = STATE.TOUCH_ZOOM_PAN;
-									var dx = event.touches[0].pageX - event.touches[1].pageX;
-									var dy = event.touches[0].pageY - event.touches[1].pageY;
-									_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
-
-									var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-									var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-									_panStart.copy(getMouseOnScreen(x, y));
-									_panEnd.copy(_panStart);
-									break;
-
-					}
-
-					_this.dispatchEvent(startEvent);
-			}
-
-			function touchmove(event) {
-
-					if (_this.enabled === false) return;
-
-					event.preventDefault();
-					event.stopPropagation();
-
-					switch (event.touches.length) {
-
-							case 1:
-									_movePrev.copy(_moveCurr);
-									_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-									break;
-
-							default:
-									// 2 or more
-									var dx = event.touches[0].pageX - event.touches[1].pageX;
-									var dy = event.touches[0].pageY - event.touches[1].pageY;
-									_touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
-
-									var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-									var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-									_panEnd.copy(getMouseOnScreen(x, y));
-									break;
-
-					}
-			}
-
-			function touchend(event) {
-
-					if (_this.enabled === false) return;
-
-					switch (event.touches.length) {
-
-							case 0:
-									_state = STATE.NONE;
-									break;
-
-							case 1:
-									_state = STATE.TOUCH_ROTATE;
-									_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-									_movePrev.copy(_moveCurr);
-									break;
-
-					}
-
-					_this.dispatchEvent(endEvent);
-			}
-
-			function contextmenu(event) {
-
-					event.preventDefault();
-			}
-
-			this.dispose = function () {
-
-					this.domElement.removeEventListener('contextmenu', contextmenu, false);
-					this.domElement.removeEventListener('mousedown', mousedown, false);
-					this.domElement.removeEventListener('mousewheel', mousewheel, false);
-					this.domElement.removeEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-					this.domElement.removeEventListener('touchstart', touchstart, false);
-					this.domElement.removeEventListener('touchend', touchend, false);
-					this.domElement.removeEventListener('touchmove', touchmove, false);
-
-					document.removeEventListener('mousemove', mousemove, false);
-					document.removeEventListener('mouseup', mouseup, false);
-
-					window.removeEventListener('keydown', keydown, false);
-					window.removeEventListener('keyup', keyup, false);
-			};
-
-			this.domElement.addEventListener('contextmenu', contextmenu, false);
-			this.domElement.addEventListener('mousedown', mousedown, false);
-			this.domElement.addEventListener('mousewheel', mousewheel, false);
-			this.domElement.addEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-			this.domElement.addEventListener('touchstart', touchstart, false);
-			this.domElement.addEventListener('touchend', touchend, false);
-			this.domElement.addEventListener('touchmove', touchmove, false);
+			_state = _prevState;
 
 			window.addEventListener('keydown', keydown, false);
-			window.addEventListener('keyup', keyup, false);
+		}
 
-			this.handleResize();
+		function mousedown(event) {
 
-			// force an update at start
-			this.update();
+			if (_this.enabled === false) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			if (_state === STATE.NONE) {
+
+				_state = event.button;
+			}
+
+			if (_state === STATE.ROTATE && !_this.noRotate) {
+
+				_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+				_movePrev.copy(_moveCurr);
+			} else if (_state === STATE.ZOOM && !_this.noZoom) {
+
+				_zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
+				_zoomEnd.copy(_zoomStart);
+			} else if (_state === STATE.PAN && !_this.noPan) {
+
+				_panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
+				_panEnd.copy(_panStart);
+			}
+
+			document.addEventListener('mousemove', mousemove, false);
+			document.addEventListener('mouseup', mouseup, false);
+
+			_this.dispatchEvent(startEvent);
+		}
+
+		function mousemove(event) {
+
+			if (_this.enabled === false) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			if (_state === STATE.ROTATE && !_this.noRotate) {
+
+				_movePrev.copy(_moveCurr);
+				_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+			} else if (_state === STATE.ZOOM && !_this.noZoom) {
+
+				_zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
+			} else if (_state === STATE.PAN && !_this.noPan) {
+
+				_panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
+			}
+		}
+
+		function mouseup(event) {
+
+			if (_this.enabled === false) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			_state = STATE.NONE;
+
+			document.removeEventListener('mousemove', mousemove);
+			document.removeEventListener('mouseup', mouseup);
+			_this.dispatchEvent(endEvent);
+		}
+
+		function mousewheel(event) {
+
+			if (_this.enabled === false) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			var delta = 0;
+
+			if (event.wheelDelta) {
+
+				// WebKit / Opera / Explorer 9
+
+				delta = event.wheelDelta / 40;
+			} else if (event.detail) {
+
+				// Firefox
+
+				delta = -event.detail / 3;
+			}
+
+			_zoomStart.y += delta * 0.01;
+			_this.dispatchEvent(startEvent);
+			_this.dispatchEvent(endEvent);
+		}
+
+		function touchstart(event) {
+
+			if (_this.enabled === false) return;
+
+			switch (event.touches.length) {
+
+				case 1:
+					_state = STATE.TOUCH_ROTATE;
+					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+					_movePrev.copy(_moveCurr);
+					break;
+
+				default:
+					// 2 or more
+					_state = STATE.TOUCH_ZOOM_PAN;
+					var dx = event.touches[0].pageX - event.touches[1].pageX;
+					var dy = event.touches[0].pageY - event.touches[1].pageY;
+					_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
+
+					var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+					var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+					_panStart.copy(getMouseOnScreen(x, y));
+					_panEnd.copy(_panStart);
+					break;
+
+			}
+
+			_this.dispatchEvent(startEvent);
+		}
+
+		function touchmove(event) {
+
+			if (_this.enabled === false) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			switch (event.touches.length) {
+
+				case 1:
+					_movePrev.copy(_moveCurr);
+					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+					break;
+
+				default:
+					// 2 or more
+					var dx = event.touches[0].pageX - event.touches[1].pageX;
+					var dy = event.touches[0].pageY - event.touches[1].pageY;
+					_touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
+
+					var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+					var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+					_panEnd.copy(getMouseOnScreen(x, y));
+					break;
+
+			}
+		}
+
+		function touchend(event) {
+
+			if (_this.enabled === false) return;
+
+			switch (event.touches.length) {
+
+				case 0:
+					_state = STATE.NONE;
+					break;
+
+				case 1:
+					_state = STATE.TOUCH_ROTATE;
+					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
+					_movePrev.copy(_moveCurr);
+					break;
+
+			}
+
+			_this.dispatchEvent(endEvent);
+		}
+
+		function contextmenu(event) {
+
+			event.preventDefault();
+		}
+
+		this.dispose = function () {
+
+			this.domElement.removeEventListener('contextmenu', contextmenu, false);
+			this.domElement.removeEventListener('mousedown', mousedown, false);
+			this.domElement.removeEventListener('mousewheel', mousewheel, false);
+			this.domElement.removeEventListener('MozMousePixelScroll', mousewheel, false); // firefox
+
+			this.domElement.removeEventListener('touchstart', touchstart, false);
+			this.domElement.removeEventListener('touchend', touchend, false);
+			this.domElement.removeEventListener('touchmove', touchmove, false);
+
+			document.removeEventListener('mousemove', mousemove, false);
+			document.removeEventListener('mouseup', mouseup, false);
+
+			window.removeEventListener('keydown', keydown, false);
+			window.removeEventListener('keyup', keyup, false);
+		};
+
+		this.domElement.addEventListener('contextmenu', contextmenu, false);
+		this.domElement.addEventListener('mousedown', mousedown, false);
+		this.domElement.addEventListener('mousewheel', mousewheel, false);
+		this.domElement.addEventListener('MozMousePixelScroll', mousewheel, false); // firefox
+
+		this.domElement.addEventListener('touchstart', touchstart, false);
+		this.domElement.addEventListener('touchend', touchend, false);
+		this.domElement.addEventListener('touchmove', touchmove, false);
+
+		window.addEventListener('keydown', keydown, false);
+		window.addEventListener('keyup', keyup, false);
+
+		this.handleResize();
+
+		// force an update at start
+		this.update();
 	}; /**
 	    * @author Eberhard Graether / http://egraether.com/
 	    * @author Mark Lundin 	/ http://mark-lundin.com
@@ -42917,7 +42926,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	        value: true
+	    value: true
 	});
 
 	var _manager = __webpack_require__(1);
@@ -42927,6 +42936,10 @@
 	var _three = __webpack_require__(6);
 
 	var _three2 = _interopRequireDefault(_three);
+
+	var _cube = __webpack_require__(12);
+
+	var _cube2 = _interopRequireDefault(_cube);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -42965,119 +42978,152 @@
 	//
 	// }
 
-	/**
-	 * Created by suncg on 2016/8/16.
-	 */
+	// Rotate an object around an arbitrary axis in world space
+	function rotateAroundWorldAxis(object, axis, radians) {
+	    rotWorldMatrix = new _three2.default.Matrix4();
+	    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+	    rotWorldMatrix.multiply(object.matrix); // pre-multiply
+
+	    object.matrix = rotWorldMatrix;
+
+	    object.rotation.setFromRotationMatrix(object.matrix);
+	} /**
+	   * Created by suncg on 2016/8/16.
+	   */
 	exports.default = {
-	        onMouseMove: function onMouseMove(event) {
-	                event.preventDefault();
+	    onMouseMove: function onMouseMove(event) {
+	        event.preventDefault();
 
-	                console.log('mousemove-----------');
+	        // console.log('mousemove-----------')
 
-	                _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
-	                _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	        _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
+	        _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-	                _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
+	        _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
 
-	                if (_manager2.default.SELECTED) {
-	                        //
-	                        var intersects = _manager2.default.raycaster.intersectObject(_manager2.default.SELECTED);
-	                        if (intersects.length > 0) {
-	                                var intersection = intersects[0].point;
-	                                if (_manager2.default.SELECTED.name == "cube") {
-	                                        // 物体随鼠标移动 group中心=交点-偏移
-	                                        console.log(_manager2.default);
+	        if (_manager2.default.SELECTED) {
+	            //
+	            var plane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0);
+	            var intersection = void 0;
+	            // console.log(plane)
 
-	                                        _manager2.default.allObjectsGroup.position.copy(intersection.sub(_manager2.default.offset));
-	                                }
-	                        }
+	            // let intersects = manager.raycaster.intersectObject(manager.SELECTED);
+	            var intersects = _manager2.default.raycaster.ray.intersectPlane(plane, intersection);
+	            console.log(intersects);
+	            if (intersects) {
+	                // let intersection = intersects[0].point;
+	                if (_manager2.default.SELECTED.name == "cube") {
+	                    // 物体随鼠标移动 group中心=交点-偏移
+	                    // console.log(manager)
+
+	                    _manager2.default.allObjectsGroup.position.copy(intersects.sub(_manager2.default.offset));
 	                }
-	        },
-	        onMouseDown: function onMouseDown(event) {
-	                event.preventDefault();
 
-	                console.log('mousedown');
-
-	                _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
-	                _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-	                _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
-
-	                var intersects = _manager2.default.raycaster.intersectObjects(_manager2.default.objects);
-
-	                if (intersects.length > 0) {
-	                        console.log(intersects);
-	                        var chosen = null;
-
-	                        _manager2.default.controls.enabled = false;
-
-	                        chosen = intersects[0];
-	                        _manager2.default.SELECTED = chosen.object;
-
-	                        var _iteratorNormalCompletion = true;
-	                        var _didIteratorError = false;
-	                        var _iteratorError = undefined;
-
-	                        try {
-	                                for (var _iterator = intersects[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	                                        var item = _step.value;
-
-
-	                                        if (item.object.name == "cube") {
-	                                                chosen = item;
-	                                                _manager2.default.SELECTED = chosen.object;
-	                                        }
-	                                        if (item.object.name == "scaleController") {
-	                                                chosen = item;
-	                                                _manager2.default.SELECTED = chosen.object;
-	                                                break;
-	                                        }
-	                                }
-	                        } catch (err) {
-	                                _didIteratorError = true;
-	                                _iteratorError = err;
-	                        } finally {
-	                                try {
-	                                        if (!_iteratorNormalCompletion && _iterator.return) {
-	                                                _iterator.return();
-	                                        }
-	                                } finally {
-	                                        if (_didIteratorError) {
-	                                                throw _iteratorError;
-	                                        }
-	                                }
-	                        }
-
-	                        _manager2.default.intersection = chosen.point;
-
-	                        _manager2.default.offset.copy(_manager2.default.intersection).sub(_manager2.default.allObjectsGroup.position);
-
-	                        console.log(_manager2.default);
-
-	                        // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
-	                        //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-	                        //     offset.copy(intersection).sub(allObjectsGroup.position);
-	                        // }
-
-	                        // manager.container.style.cursor = 'move';
+	                if (/^x[Cube|Cylinder|Line]/.test(_manager2.default.SELECTED.name)) {
+	                    console.log('x AXIS---');
+	                    // console.log(this)
+	                    _manager2.default.distanceY = event.clientY - _manager2.default.prevY;
+	                    _manager2.default.speedY = _manager2.default.distanceY * 0.01;
+	                    // 第一次点击移动时不旋转
+	                    if (_manager2.default.prevY != 0) {
+	                        _cube2.default.rotateAroundWorldAxis(_manager2.default.objects[0], _manager2.default.xAxis, _manager2.default.speedY);
+	                    }
+	                    _manager2.default.prevY = event.clientY;
 	                }
-	        },
-	        onMouseUp: function onMouseUp(event) {
-	                event.preventDefault();
-
-	                _manager2.default.controls.enabled = true;
-
-	                // if (INTERSECTED) {
-
-	                _manager2.default.SELECTED = null;
-
-	                // }
-	        },
-	        onWindowResize: function onWindowResize(e) {
-	                _manager2.default.camera.aspect = window.innerWidth / window.innerHeight;
-	                _manager2.default.camera.updateProjectionMatrix();
-	                _manager2.default.renderer.setSize(window.innerWidth, window.innerHeight);
+	            }
 	        }
+	    },
+	    onMouseDown: function onMouseDown(event) {
+	        event.preventDefault();
+
+	        // console.log('mousedown')
+
+	        _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
+	        _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+	        _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
+
+	        var intersects = _manager2.default.raycaster.intersectObjects(_manager2.default.objects);
+
+	        if (intersects.length > 0) {
+	            // console.log(intersects)
+	            var chosen = null;
+
+	            _manager2.default.controls.enabled = false;
+
+	            chosen = intersects[0];
+	            _manager2.default.SELECTED = chosen.object;
+
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = intersects[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var item = _step.value;
+
+
+	                    if (item.object.name == "cube") {
+	                        chosen = item;
+	                        _manager2.default.SELECTED = chosen.object;
+	                    }
+	                    if (item.object.name == "scaleController") {
+	                        chosen = item;
+	                        _manager2.default.SELECTED = chosen.object;
+	                        break;
+	                    }
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
+	            }
+
+	            _manager2.default.intersection = chosen.point;
+
+	            _manager2.default.offset.copy(_manager2.default.intersection).sub(_manager2.default.allObjectsGroup.position);
+
+	            // console.log(manager)
+
+	            // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
+	            //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
+	            //     offset.copy(intersection).sub(allObjectsGroup.position);
+	            // }
+
+	            // manager.container.style.cursor = 'move';
+	        }
+	    },
+	    onMouseUp: function onMouseUp(event) {
+	        event.preventDefault();
+
+	        _manager2.default.controls.enabled = true;
+
+	        _manager2.default.speedX = 0;
+	        _manager2.default.speedY = 0;
+	        _manager2.default.prevX = 0;
+	        _manager2.default.prevY = 0;
+
+	        // if (INTERSECTED) {
+
+	        _manager2.default.SELECTED = null;
+
+	        // }
+	    },
+	    onWindowResize: function onWindowResize(e) {
+	        _manager2.default.camera.aspect = window.innerWidth / window.innerHeight;
+	        _manager2.default.camera.updateProjectionMatrix();
+	        _manager2.default.renderer.setSize(window.innerWidth, window.innerHeight);
+	    }
 	};
 
 /***/ },
@@ -43260,6 +43306,18 @@
 	            this.axis.xCylinder = xCylinder.rotateZ(Math.PI / 2);
 	            this.axis.yCylinder = yCylinder;
 	            this.axis.zCylinder = zCylinder.rotateX(Math.PI / 2);
+	        }
+	    }], [{
+	        key: 'rotateAroundWorldAxis',
+	        value: function rotateAroundWorldAxis(object, axis, radians) {
+	            var rotWorldMatrix = new _three2.default.Matrix4();
+	            rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+	            rotWorldMatrix.multiply(object.matrix); // pre-multiply
+
+	            object.matrix = rotWorldMatrix;
+
+	            object.rotation.setFromRotationMatrix(object.matrix);
 	        }
 	    }]);
 
