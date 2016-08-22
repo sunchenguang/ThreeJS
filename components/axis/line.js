@@ -1,28 +1,29 @@
 /**
- * Created by suncg on 2016/8/16.
+ * Created by suncg on 2016/8/18.
  */
 import THREE from 'three';
 
-class Axis {
-    constructor() {
+class Line {
+    constructor(options) {
         this.xLine = null;
         this.yLine = null;
         this.zLine = null;
 
+        this.options = options;
 
         this.init();
     }
 
     init() {
+        let basePoint = this.options.basePoint;
+        let xPoint = this.options.xPoint;
+        let yPoint = this.options.yPoint;
+        let zPoint = this.options.zPoint;
 
-        let point = {x: 0, y: 0, z: 0};
-        let pointX = point.x, pointY = point.y, pointZ = point.z;
-        let lineLength = 3;
 
-
-        this.xLine = this.getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
-        this.yLine = this.getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX, pointY + lineLength, pointZ), 'yLine');
-        this.zLine = this.getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX, pointY, pointZ + lineLength), 'zLine');
+        this.xLine = this.getLine(basePoint, xPoint, 'xLine');
+        this.yLine = this.getLine(basePoint, yPoint, 'yLine');
+        this.zLine = this.getLine(basePoint, zPoint, 'zLine');
 
         this.xLine.name = "xLine";
         this.yLine.name = "yLine";
@@ -30,7 +31,7 @@ class Axis {
     }
 
     getLine(point1, point2, lineName) {
-        let xLineColor = 0xFF0000, yLineColor = 0x008000, zLineColor = 0x0000FF;
+        let xLineColor = this.options.xColor, yLineColor = this.options.yColor, zLineColor = this.options.zColor;
 
         return (function () {
             let lineMaterial = new THREE.LineBasicMaterial({
@@ -61,11 +62,26 @@ class Axis {
 
     }
 
-
 }
 
 
-export default Axis;
+export default Line;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

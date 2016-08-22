@@ -11,7 +11,7 @@ class Camera {
     }
 
     init() {
-        this.camera.position.set(3, 4, 3);
+        this.camera.position.set(3, 3, 3);
         this.camera.up.set(0, 1, 0);
         //  照相机聚焦于（0,0,0）时 修改position只会改变物体相对大小，不改变相关位置
         this.camera.lookAt({

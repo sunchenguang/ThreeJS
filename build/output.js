@@ -100,19 +100,15 @@
 
 	var _three2 = _interopRequireDefault(_three);
 
-	__webpack_require__(10);
-
 	var _listener = __webpack_require__(11);
 
 	var _listener2 = _interopRequireDefault(_listener);
 
-	var _cube = __webpack_require__(12);
+	var _group = __webpack_require__(12);
 
-	var _cube2 = _interopRequireDefault(_cube);
+	var _group2 = _interopRequireDefault(_group);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -122,34 +118,19 @@
 
 	        this.container = null;
 	        this.stats = null;
-	        this.grid = null;
-	        this.cube = null;
-	        this.scaleController = null;
+
 	        this.camera = new _camera2.default().camera;
 	        this.renderer = null;
-	        this.controls = null;
 	        this.scene = new _scene2.default().scene;
 
-	        this.objects = [];
-	        this.plane = new _three2.default.Plane();
-	        this.raycaster = new _three2.default.Raycaster();
-	        this.mouse = new _three2.default.Vector2();
+	        this.mouse = new _three2.default.Vector3();
+	        this.prevMouse = new _three2.default.Vector3();
 	        this.offset = new _three2.default.Vector3();
-	        this.intersection = new _three2.default.Vector3();
-	        this.INTERSECTED = null;
-	        this.SELECTED = null;
-	        this.prevX = 0;
-	        this.prevY = 0;
-	        this.distanceX = 0;
-	        this.distanceY = 0;
-	        this.speedX = 0;
-	        this.speedY = 0;
-	        this.xAxis = new _three2.default.Vector3(1, 0, 0);
-	        this.yAxis = new _three2.default.Vector3(0, 1, 0);
-	        this.zAxis = new _three2.default.Vector3(0, 0, 1);
 
-	        this.allObjectsGroup = new _three2.default.Group();
-	        this.axisGroup = new _three2.default.Group();
+	        // this.raycaster = new THREE.Raycaster();
+	        this.SELECTED = null;
+
+	        this.objects = [];
 
 	        this.init();
 	    }
@@ -160,36 +141,13 @@
 	            this.initContainer();
 	            this.initRenderer();
 	            this.initStats();
-	            // this.initGrid();
-	            //
-	            this.initControls();
-	            this.initCube();
 
-	            // this.scaleController = this.cube.children.filter(function (item, index) {
-	            //     return item.name == 'scaleController';
-	            // })[0];
+	            this.bindEvents();
 
-	            // this.objects = this.scene.children;
-	            // this.objects.push(this.cube);
-
-
-	            console.log(this);
-
-	            for (var key in this.axis) {
-	                // console.log(key)
-	                this.axisGroup.add(this.axis[key]);
-	            }
-
-	            this.allObjectsGroup.add(this.cube);
-	            this.allObjectsGroup.add(this.axisGroup);
+	            this.initGroup();
+	            this.initObjects();
 
 	            this.scene.add(this.allObjectsGroup);
-
-	            // console.log(this.cube)
-	            // console.log(this.axisGroup)
-	            this.objects = [this.cube].concat(_toConsumableArray(this.axisGroup.children));
-
-	            console.log(this);
 
 	            this.animate();
 	        }
@@ -223,20 +181,12 @@
 	        key: 'initRenderer',
 	        value: function initRenderer() {
 	            this.renderer = new _renderer2.default().renderer;
-	            this.container.appendChild(this.renderer.domElement);
+	            // this.container.appendChild(this.renderer.domElement);
+	            document.body.appendChild(this.renderer.domElement);
 	        }
 	    }, {
-	        key: 'initControls',
-	        value: function initControls() {
-	            this.controls = new _three2.default.TrackballControls(this.camera);
-	            this.controls.rotateSpeed = 1.0;
-	            this.controls.zoomSpeed = 1.2;
-	            this.controls.panSpeed = 0.8;
-	            this.controls.noZoom = false;
-	            this.controls.noPan = false;
-	            this.controls.staticMoving = true;
-	            this.controls.dynamicDampingFactor = 0.3;
-
+	        key: 'bindEvents',
+	        value: function bindEvents() {
 	            // 绑定事件
 	            this.renderer.domElement.addEventListener('mousemove', _listener2.default.onMouseMove, false);
 	            this.renderer.domElement.addEventListener('mousedown', _listener2.default.onMouseDown, false);
@@ -245,19 +195,19 @@
 	            window.addEventListener('resize', _listener2.default.onWindowResize.bind(this), false);
 	        }
 	    }, {
-	        key: 'initCube',
-	        value: function initCube() {
-	            // this.cube = new Cube();
-	            var _ref = new _cube2.default();
+	        key: 'initGroup',
+	        value: function initGroup() {
+	            var group = new _group2.default();
 
-	            var cube = _ref.cube;
-	            var axis = _ref.axis;
+	            this.allObjectsGroup = group.allObjectsgroup;
+	            this.axisGroup = group.axisGroup;
 
-	            this.cube = cube;
-	            this.axis = axis;
-
-	            // this.scene.add(this.cube);
+	            this.objects = group.initObjects();
+	            console.log(this);
 	        }
+	    }, {
+	        key: 'initObjects',
+	        value: function initObjects() {}
 	    }, {
 	        key: 'animate',
 	        value: function animate() {
@@ -270,7 +220,6 @@
 	    }, {
 	        key: 'render',
 	        value: function render() {
-	            this.controls.update();
 	            this.renderer.render(this.scene, this.camera);
 	        }
 	    }]);
@@ -42250,7 +42199,7 @@
 	    _createClass(Camera, [{
 	        key: 'init',
 	        value: function init() {
-	            this.camera.position.set(3, 4, 3);
+	            this.camera.position.set(3, 3, 3);
 	            this.camera.up.set(0, 1, 0);
 	            //  照相机聚焦于（0,0,0）时 修改position只会改变物体相对大小，不改变相关位置
 	            this.camera.lookAt({
@@ -42304,8 +42253,7 @@
 	        key: 'init',
 	        value: function init() {
 	            this.renderer.setSize(window.innerWidth, window.innerHeight);
-	            this.renderer.setPixelRatio(window.devicePixelRatio);
-	            this.renderer.setSize(window.innerWidth, window.innerHeight);
+	            // this.renderer.setPixelRatio(window.devicePixelRatio);
 	            this.renderer.sortObjects = false;
 	            this.renderer.setClearColor(0xfffffff, 1);
 	        }
@@ -42357,569 +42305,7 @@
 	exports.default = Scene;
 
 /***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _three = __webpack_require__(6);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	_three2.default.TrackballControls = function (object, domElement) {
-
-		var _this = this;
-		var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
-
-		this.object = object;
-		this.domElement = domElement !== undefined ? domElement : document;
-
-		// API
-
-		this.enabled = true;
-
-		this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
-		this.rotateSpeed = 1.0;
-		this.zoomSpeed = 1.2;
-		this.panSpeed = 0.3;
-
-		this.noRotate = false;
-		this.noZoom = false;
-		this.noPan = false;
-
-		this.staticMoving = false;
-		this.dynamicDampingFactor = 0.2;
-
-		this.minDistance = 0;
-		this.maxDistance = Infinity;
-
-		this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
-
-		// internals
-
-		this.target = new _three2.default.Vector3();
-
-		var EPS = 0.000001;
-
-		var lastPosition = new _three2.default.Vector3();
-
-		var _state = STATE.NONE,
-		    _prevState = STATE.NONE,
-		    _eye = new _three2.default.Vector3(),
-		    _movePrev = new _three2.default.Vector2(),
-		    _moveCurr = new _three2.default.Vector2(),
-		    _lastAxis = new _three2.default.Vector3(),
-		    _lastAngle = 0,
-		    _zoomStart = new _three2.default.Vector2(),
-		    _zoomEnd = new _three2.default.Vector2(),
-		    _touchZoomDistanceStart = 0,
-		    _touchZoomDistanceEnd = 0,
-		    _panStart = new _three2.default.Vector2(),
-		    _panEnd = new _three2.default.Vector2();
-
-		// for reset
-
-		this.target0 = this.target.clone();
-		this.position0 = this.object.position.clone();
-		this.up0 = this.object.up.clone();
-
-		// events
-
-		var changeEvent = { type: 'change' };
-		var startEvent = { type: 'start' };
-		var endEvent = { type: 'end' };
-
-		// methods
-
-		this.handleResize = function () {
-
-			if (this.domElement === document) {
-
-				this.screen.left = 0;
-				this.screen.top = 0;
-				this.screen.width = window.innerWidth;
-				this.screen.height = window.innerHeight;
-			} else {
-
-				var box = this.domElement.getBoundingClientRect();
-				// adjustments come from similar code in the jquery offset() function
-				var d = this.domElement.ownerDocument.documentElement;
-				this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-				this.screen.top = box.top + window.pageYOffset - d.clientTop;
-				this.screen.width = box.width;
-				this.screen.height = box.height;
-			}
-		};
-
-		this.handleEvent = function (event) {
-
-			if (typeof this[event.type] == 'function') {
-
-				this[event.type](event);
-			}
-		};
-
-		var getMouseOnScreen = function () {
-
-			var vector = new _three2.default.Vector2();
-
-			return function getMouseOnScreen(pageX, pageY) {
-
-				vector.set((pageX - _this.screen.left) / _this.screen.width, (pageY - _this.screen.top) / _this.screen.height);
-
-				return vector;
-			};
-		}();
-
-		var getMouseOnCircle = function () {
-
-			var vector = new _three2.default.Vector2();
-
-			return function getMouseOnCircle(pageX, pageY) {
-
-				vector.set((pageX - _this.screen.width * 0.5 - _this.screen.left) / (_this.screen.width * 0.5), (_this.screen.height + 2 * (_this.screen.top - pageY)) / _this.screen.width);
-
-				return vector;
-			};
-		}();
-
-		this.rotateCamera = function () {
-
-			var axis = new _three2.default.Vector3(),
-			    quaternion = new _three2.default.Quaternion(),
-			    eyeDirection = new _three2.default.Vector3(),
-			    objectUpDirection = new _three2.default.Vector3(),
-			    objectSidewaysDirection = new _three2.default.Vector3(),
-			    moveDirection = new _three2.default.Vector3(),
-			    angle;
-
-			return function rotateCamera() {
-
-				moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
-				angle = moveDirection.length();
-
-				if (angle) {
-
-					_eye.copy(_this.object.position).sub(_this.target);
-
-					eyeDirection.copy(_eye).normalize();
-					objectUpDirection.copy(_this.object.up).normalize();
-					objectSidewaysDirection.crossVectors(objectUpDirection, eyeDirection).normalize();
-
-					objectUpDirection.setLength(_moveCurr.y - _movePrev.y);
-					objectSidewaysDirection.setLength(_moveCurr.x - _movePrev.x);
-
-					moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
-
-					axis.crossVectors(moveDirection, _eye).normalize();
-
-					angle *= _this.rotateSpeed;
-					quaternion.setFromAxisAngle(axis, angle);
-
-					_eye.applyQuaternion(quaternion);
-					_this.object.up.applyQuaternion(quaternion);
-
-					_lastAxis.copy(axis);
-					_lastAngle = angle;
-				} else if (!_this.staticMoving && _lastAngle) {
-
-					_lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
-					_eye.copy(_this.object.position).sub(_this.target);
-					quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
-					_eye.applyQuaternion(quaternion);
-					_this.object.up.applyQuaternion(quaternion);
-				}
-
-				_movePrev.copy(_moveCurr);
-			};
-		}();
-
-		this.zoomCamera = function () {
-
-			var factor;
-
-			if (_state === STATE.TOUCH_ZOOM_PAN) {
-
-				factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-				_touchZoomDistanceStart = _touchZoomDistanceEnd;
-				_eye.multiplyScalar(factor);
-			} else {
-
-				factor = 1.0 + (_zoomEnd.y - _zoomStart.y) * _this.zoomSpeed;
-
-				if (factor !== 1.0 && factor > 0.0) {
-
-					_eye.multiplyScalar(factor);
-
-					if (_this.staticMoving) {
-
-						_zoomStart.copy(_zoomEnd);
-					} else {
-
-						_zoomStart.y += (_zoomEnd.y - _zoomStart.y) * this.dynamicDampingFactor;
-					}
-				}
-			}
-		};
-
-		this.panCamera = function () {
-
-			var mouseChange = new _three2.default.Vector2(),
-			    objectUp = new _three2.default.Vector3(),
-			    pan = new _three2.default.Vector3();
-
-			return function panCamera() {
-
-				mouseChange.copy(_panEnd).sub(_panStart);
-
-				if (mouseChange.lengthSq()) {
-
-					mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
-
-					pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
-					pan.add(objectUp.copy(_this.object.up).setLength(mouseChange.y));
-
-					_this.object.position.add(pan);
-					_this.target.add(pan);
-
-					if (_this.staticMoving) {
-
-						_panStart.copy(_panEnd);
-					} else {
-
-						_panStart.add(mouseChange.subVectors(_panEnd, _panStart).multiplyScalar(_this.dynamicDampingFactor));
-					}
-				}
-			};
-		}();
-
-		this.checkDistances = function () {
-
-			if (!_this.noZoom || !_this.noPan) {
-
-				if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
-
-					_this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
-					_zoomStart.copy(_zoomEnd);
-				}
-
-				if (_eye.lengthSq() < _this.minDistance * _this.minDistance) {
-
-					_this.object.position.addVectors(_this.target, _eye.setLength(_this.minDistance));
-					_zoomStart.copy(_zoomEnd);
-				}
-			}
-		};
-
-		this.update = function () {
-
-			_eye.subVectors(_this.object.position, _this.target);
-
-			if (!_this.noRotate) {
-
-				_this.rotateCamera();
-			}
-
-			if (!_this.noZoom) {
-
-				_this.zoomCamera();
-			}
-
-			if (!_this.noPan) {
-
-				_this.panCamera();
-			}
-
-			_this.object.position.addVectors(_this.target, _eye);
-
-			_this.checkDistances();
-
-			_this.object.lookAt(_this.target);
-
-			if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
-
-				_this.dispatchEvent(changeEvent);
-
-				lastPosition.copy(_this.object.position);
-			}
-		};
-
-		this.reset = function () {
-
-			_state = STATE.NONE;
-			_prevState = STATE.NONE;
-
-			_this.target.copy(_this.target0);
-			_this.object.position.copy(_this.position0);
-			_this.object.up.copy(_this.up0);
-
-			_eye.subVectors(_this.object.position, _this.target);
-
-			_this.object.lookAt(_this.target);
-
-			_this.dispatchEvent(changeEvent);
-
-			lastPosition.copy(_this.object.position);
-		};
-
-		// listeners
-
-		function keydown(event) {
-
-			if (_this.enabled === false) return;
-
-			window.removeEventListener('keydown', keydown);
-
-			_prevState = _state;
-
-			if (_state !== STATE.NONE) {
-
-				return;
-			} else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
-
-				_state = STATE.ROTATE;
-			} else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
-
-				_state = STATE.ZOOM;
-			} else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
-
-				_state = STATE.PAN;
-			}
-		}
-
-		function keyup(event) {
-
-			if (_this.enabled === false) return;
-
-			_state = _prevState;
-
-			window.addEventListener('keydown', keydown, false);
-		}
-
-		function mousedown(event) {
-
-			if (_this.enabled === false) return;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			if (_state === STATE.NONE) {
-
-				_state = event.button;
-			}
-
-			if (_state === STATE.ROTATE && !_this.noRotate) {
-
-				_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-				_movePrev.copy(_moveCurr);
-			} else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-				_zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-				_zoomEnd.copy(_zoomStart);
-			} else if (_state === STATE.PAN && !_this.noPan) {
-
-				_panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-				_panEnd.copy(_panStart);
-			}
-
-			document.addEventListener('mousemove', mousemove, false);
-			document.addEventListener('mouseup', mouseup, false);
-
-			_this.dispatchEvent(startEvent);
-		}
-
-		function mousemove(event) {
-
-			if (_this.enabled === false) return;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			if (_state === STATE.ROTATE && !_this.noRotate) {
-
-				_movePrev.copy(_moveCurr);
-				_moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-			} else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-				_zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-			} else if (_state === STATE.PAN && !_this.noPan) {
-
-				_panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-			}
-		}
-
-		function mouseup(event) {
-
-			if (_this.enabled === false) return;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			_state = STATE.NONE;
-
-			document.removeEventListener('mousemove', mousemove);
-			document.removeEventListener('mouseup', mouseup);
-			_this.dispatchEvent(endEvent);
-		}
-
-		function mousewheel(event) {
-
-			if (_this.enabled === false) return;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			var delta = 0;
-
-			if (event.wheelDelta) {
-
-				// WebKit / Opera / Explorer 9
-
-				delta = event.wheelDelta / 40;
-			} else if (event.detail) {
-
-				// Firefox
-
-				delta = -event.detail / 3;
-			}
-
-			_zoomStart.y += delta * 0.01;
-			_this.dispatchEvent(startEvent);
-			_this.dispatchEvent(endEvent);
-		}
-
-		function touchstart(event) {
-
-			if (_this.enabled === false) return;
-
-			switch (event.touches.length) {
-
-				case 1:
-					_state = STATE.TOUCH_ROTATE;
-					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-					_movePrev.copy(_moveCurr);
-					break;
-
-				default:
-					// 2 or more
-					_state = STATE.TOUCH_ZOOM_PAN;
-					var dx = event.touches[0].pageX - event.touches[1].pageX;
-					var dy = event.touches[0].pageY - event.touches[1].pageY;
-					_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
-
-					var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-					var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-					_panStart.copy(getMouseOnScreen(x, y));
-					_panEnd.copy(_panStart);
-					break;
-
-			}
-
-			_this.dispatchEvent(startEvent);
-		}
-
-		function touchmove(event) {
-
-			if (_this.enabled === false) return;
-
-			event.preventDefault();
-			event.stopPropagation();
-
-			switch (event.touches.length) {
-
-				case 1:
-					_movePrev.copy(_moveCurr);
-					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-					break;
-
-				default:
-					// 2 or more
-					var dx = event.touches[0].pageX - event.touches[1].pageX;
-					var dy = event.touches[0].pageY - event.touches[1].pageY;
-					_touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
-
-					var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-					var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-					_panEnd.copy(getMouseOnScreen(x, y));
-					break;
-
-			}
-		}
-
-		function touchend(event) {
-
-			if (_this.enabled === false) return;
-
-			switch (event.touches.length) {
-
-				case 0:
-					_state = STATE.NONE;
-					break;
-
-				case 1:
-					_state = STATE.TOUCH_ROTATE;
-					_moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-					_movePrev.copy(_moveCurr);
-					break;
-
-			}
-
-			_this.dispatchEvent(endEvent);
-		}
-
-		function contextmenu(event) {
-
-			event.preventDefault();
-		}
-
-		this.dispose = function () {
-
-			this.domElement.removeEventListener('contextmenu', contextmenu, false);
-			this.domElement.removeEventListener('mousedown', mousedown, false);
-			this.domElement.removeEventListener('mousewheel', mousewheel, false);
-			this.domElement.removeEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-			this.domElement.removeEventListener('touchstart', touchstart, false);
-			this.domElement.removeEventListener('touchend', touchend, false);
-			this.domElement.removeEventListener('touchmove', touchmove, false);
-
-			document.removeEventListener('mousemove', mousemove, false);
-			document.removeEventListener('mouseup', mouseup, false);
-
-			window.removeEventListener('keydown', keydown, false);
-			window.removeEventListener('keyup', keyup, false);
-		};
-
-		this.domElement.addEventListener('contextmenu', contextmenu, false);
-		this.domElement.addEventListener('mousedown', mousedown, false);
-		this.domElement.addEventListener('mousewheel', mousewheel, false);
-		this.domElement.addEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-		this.domElement.addEventListener('touchstart', touchstart, false);
-		this.domElement.addEventListener('touchend', touchend, false);
-		this.domElement.addEventListener('touchmove', touchmove, false);
-
-		window.addEventListener('keydown', keydown, false);
-		window.addEventListener('keyup', keyup, false);
-
-		this.handleResize();
-
-		// force an update at start
-		this.update();
-	}; /**
-	    * @author Eberhard Graether / http://egraether.com/
-	    * @author Mark Lundin 	/ http://mark-lundin.com
-	    * @author Simone Manini / http://daron1337.github.io
-	    * @author Luca Antiga 	/ http://lantiga.github.io
-	    */
-
-	_three2.default.TrackballControls.prototype = Object.create(_three2.default.EventDispatcher.prototype);
-	_three2.default.TrackballControls.prototype.constructor = _three2.default.TrackballControls;
-
-/***/ },
+/* 10 */,
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -42937,194 +42323,152 @@
 
 	var _three2 = _interopRequireDefault(_three);
 
-	var _cube = __webpack_require__(12);
+	var _util = __webpack_require__(19);
 
-	var _cube2 = _interopRequireDefault(_cube);
+	var _util2 = _interopRequireDefault(_util);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	// function onDocumentMouseDown(event) {
-	//
-	//     event.preventDefault();
-	//
-	//     raycaster.setFromCamera(mouse, camera);
-	//
-	//     var intersects = raycaster.intersectObjects(objects);
-	//
-	//     if (intersects.length > 0) {
-	//         controls.enabled = false;
-	//
-	//         SELECTED = intersects[0].object;
-	//         intersects.forEach(function (item, index) {
-	//             if (item.object == cube) {
-	//                 SELECTED = cube;
-	//             }
-	//             if (item.object == scaleController) {
-	//                 SELECTED = scaleController;
-	//             }
-	//
-	//
-	//         });
-	//
-	//
-	//         if (raycaster.ray.intersectPlane(plane, intersection)) {
-	//             //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-	//             offset.copy(intersection).sub(allObjectsGroup.position);
-	//         }
-	//
-	//         container.style.cursor = 'move';
-	//
-	//     }
-	//
-	// }
-
-	// Rotate an object around an arbitrary axis in world space
-	function rotateAroundWorldAxis(object, axis, radians) {
-	    rotWorldMatrix = new _three2.default.Matrix4();
-	    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
-
-	    rotWorldMatrix.multiply(object.matrix); // pre-multiply
-
-	    object.matrix = rotWorldMatrix;
-
-	    object.rotation.setFromRotationMatrix(object.matrix);
-	} /**
-	   * Created by suncg on 2016/8/16.
-	   */
 	exports.default = {
 	    onMouseMove: function onMouseMove(event) {
 	        event.preventDefault();
 
-	        // console.log('mousemove-----------')
+	        var raycaster = new _three2.default.Raycaster();
+	        var distanceX = void 0,
+	            distanceY = void 0,
+	            speedX = void 0,
+	            speedY = void 0,
+	            scaleYDistance = void 0;
+	        var xAxis = new _three2.default.Vector3(1, 0, 0),
+	            yAxis = new _three2.default.Vector3(0, 1, 0),
+	            zAxis = new _three2.default.Vector3(0, 0, 1);
 
+	        //得到当前鼠标于三维的x,y坐标
 	        _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
 	        _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	        _manager2.default.mouse.z = 0.5;
 
-	        _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
+	        raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
 
 	        if (_manager2.default.SELECTED) {
-	            //
-	            var plane = new _three2.default.Plane(new _three2.default.Vector3(0, 0, 1), 0);
-	            var intersection = void 0;
-	            // console.log(plane)
+	            switch (_manager2.default.SELECTED.name) {
+	                case 'cube':
+	                    // mouse.unproject(camera);可以得到一个射线指向你想要的方向,mouse的x,y,z值更新
+	                    //mouse坐标-固定的偏移量=物体位置
+	                    _manager2.default.mouse.unproject(_manager2.default.camera);
+	                    _manager2.default.allObjectsGroup.position.copy(_manager2.default.mouse.sub(_manager2.default.offset));
+	                    break;
 
-	            // let intersects = manager.raycaster.intersectObject(manager.SELECTED);
-	            var intersects = _manager2.default.raycaster.ray.intersectPlane(plane, intersection);
-	            console.log(intersects);
-	            if (intersects) {
-	                // let intersection = intersects[0].point;
-	                if (_manager2.default.SELECTED.name == "cube") {
-	                    // 物体随鼠标移动 group中心=交点-偏移
-	                    // console.log(manager)
+	                case 'xCylinder':
+	                    _manager2.default.mouse.unproject(_manager2.default.camera);
+	                    distanceY = _manager2.default.mouse.y - _manager2.default.prevMouse.y;
+	                    speedY = distanceY;
 
-	                    _manager2.default.allObjectsGroup.position.copy(intersects.sub(_manager2.default.offset));
-	                }
-
-	                if (/^x[Cube|Cylinder|Line]/.test(_manager2.default.SELECTED.name)) {
-	                    console.log('x AXIS---');
-	                    // console.log(this)
-	                    _manager2.default.distanceY = event.clientY - _manager2.default.prevY;
-	                    _manager2.default.speedY = _manager2.default.distanceY * 0.01;
 	                    // 第一次点击移动时不旋转
-	                    if (_manager2.default.prevY != 0) {
-	                        _cube2.default.rotateAroundWorldAxis(_manager2.default.objects[0], _manager2.default.xAxis, _manager2.default.speedY);
+	                    if (_manager2.default.prevMouse.y != 0) {
+	                        _util2.default.rotateAroundWorldAxis(_manager2.default.objects[0], xAxis, -speedY);
 	                    }
-	                    _manager2.default.prevY = event.clientY;
-	                }
+	                    _manager2.default.prevMouse.copy(_manager2.default.mouse);
+
+	                    break;
+
+	                case 'yCylinder':
+	                    _manager2.default.mouse.unproject(_manager2.default.camera);
+	                    distanceX = _manager2.default.mouse.x - _manager2.default.prevMouse.x;
+	                    speedX = distanceX;
+
+	                    // 第一次点击移动时不旋转
+	                    if (_manager2.default.prevMouse.x != 0) {
+	                        _util2.default.rotateAroundWorldAxis(_manager2.default.objects[0], yAxis, speedX);
+	                    }
+	                    _manager2.default.prevMouse.copy(_manager2.default.mouse);
+	                    break;
+
+	                case 'zCylinder':
+	                    _manager2.default.mouse.unproject(_manager2.default.camera);
+	                    distanceY = _manager2.default.mouse.y - _manager2.default.prevMouse.y;
+	                    speedY = distanceY;
+
+	                    // 第一次点击移动时不旋转
+	                    if (_manager2.default.prevMouse.y != 0) {
+	                        _util2.default.rotateAroundWorldAxis(_manager2.default.objects[0], zAxis, speedY);
+	                    }
+	                    _manager2.default.prevMouse.copy(_manager2.default.mouse);
+
+	                    break;
+
+	                case 'scaleController':
+	                    _manager2.default.mouse.unproject(_manager2.default.camera);
+	                    scaleYDistance = _manager2.default.mouse.y - _manager2.default.prevMouse.y;
+
+	                    if (_manager2.default.prevMouse.y != 0) {
+	                        if (scaleYDistance > 0 && _manager2.default.allObjectsGroup.scale.x < 2) {
+	                            _manager2.default.allObjectsGroup.scale.multiplyScalar(1.02);
+	                            _manager2.default.axisGroup.scale.divideScalar(1.02);
+	                        } else {
+	                            if (_manager2.default.allObjectsGroup.scale.x > 0.3) {
+	                                _manager2.default.allObjectsGroup.scale.multiplyScalar(0.98);
+	                                _manager2.default.axisGroup.scale.divideScalar(0.98);
+	                            }
+	                        }
+	                    }
+	                    _manager2.default.prevMouse.copy(_manager2.default.mouse);
+
+	                    break;
+	                default:
+	                    console.log('mouse move select error');
 	            }
+
+	            return;
 	        }
+
+	        var intersects = raycaster.intersectObjects(_manager2.default.objects);
 	    },
 	    onMouseDown: function onMouseDown(event) {
 	        event.preventDefault();
 
-	        // console.log('mousedown')
+	        var raycaster = new _three2.default.Raycaster();
 
-	        _manager2.default.mouse.x = event.clientX / window.innerWidth * 2 - 1;
-	        _manager2.default.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	        raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
 
-	        _manager2.default.raycaster.setFromCamera(_manager2.default.mouse, _manager2.default.camera);
-
-	        var intersects = _manager2.default.raycaster.intersectObjects(_manager2.default.objects);
+	        var intersects = raycaster.intersectObjects(_manager2.default.objects);
 
 	        if (intersects.length > 0) {
-	            // console.log(intersects)
-	            var chosen = null;
+	            _manager2.default.SELECTED = intersects[0].object;
 
-	            _manager2.default.controls.enabled = false;
-
-	            chosen = intersects[0];
-	            _manager2.default.SELECTED = chosen.object;
-
-	            var _iteratorNormalCompletion = true;
-	            var _didIteratorError = false;
-	            var _iteratorError = undefined;
-
-	            try {
-	                for (var _iterator = intersects[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-	                    var item = _step.value;
-
-
-	                    if (item.object.name == "cube") {
-	                        chosen = item;
-	                        _manager2.default.SELECTED = chosen.object;
-	                    }
-	                    if (item.object.name == "scaleController") {
-	                        chosen = item;
-	                        _manager2.default.SELECTED = chosen.object;
-	                        break;
-	                    }
+	            //当与射线相交的物体中有坐标轴体或中心立方体时优先选中
+	            for (var i = 0; i < intersects.length; i++) {
+	                if (/^[x|y|z]Cylinder$/.test(intersects[i].object.name)) {
+	                    _manager2.default.SELECTED = intersects[i].object;
+	                    break;
 	                }
-	            } catch (err) {
-	                _didIteratorError = true;
-	                _iteratorError = err;
-	            } finally {
-	                try {
-	                    if (!_iteratorNormalCompletion && _iterator.return) {
-	                        _iterator.return();
-	                    }
-	                } finally {
-	                    if (_didIteratorError) {
-	                        throw _iteratorError;
-	                    }
+	                if (/^scaleController$/.test(intersects[i].object.name)) {
+	                    _manager2.default.SELECTED = intersects[i].object;
+	                    break;
 	                }
 	            }
 
-	            _manager2.default.intersection = chosen.point;
-
-	            _manager2.default.offset.copy(_manager2.default.intersection).sub(_manager2.default.allObjectsGroup.position);
-
-	            // console.log(manager)
-
-	            // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
-	            //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-	            //     offset.copy(intersection).sub(allObjectsGroup.position);
-	            // }
-
-	            // manager.container.style.cursor = 'move';
+	            //更新mouse位置
+	            _manager2.default.mouse.unproject(_manager2.default.camera);
+	            //鼠标位置-物体位置=偏移量
+	            _manager2.default.offset.copy(_manager2.default.mouse).sub(_manager2.default.allObjectsGroup.position);
 	        }
 	    },
 	    onMouseUp: function onMouseUp(event) {
 	        event.preventDefault();
 
-	        _manager2.default.controls.enabled = true;
-
-	        _manager2.default.speedX = 0;
-	        _manager2.default.speedY = 0;
-	        _manager2.default.prevX = 0;
-	        _manager2.default.prevY = 0;
-
-	        // if (INTERSECTED) {
-
 	        _manager2.default.SELECTED = null;
 
-	        // }
+	        _manager2.default.prevMouse = new _three2.default.Vector3(0, 0, 0);
 	    },
 	    onWindowResize: function onWindowResize(e) {
 	        _manager2.default.camera.aspect = window.innerWidth / window.innerHeight;
 	        _manager2.default.camera.updateProjectionMatrix();
 	        _manager2.default.renderer.setSize(window.innerWidth, window.innerHeight);
 	    }
-	};
+	}; /**
+	    * Created by suncg on 2016/8/16.
+	    */
 
 /***/ },
 /* 12 */
@@ -43133,21 +42477,114 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	        value: true
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/16.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/18.
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
+
+	var _cube = __webpack_require__(13);
+
+	var _cube2 = _interopRequireDefault(_cube);
 
 	var _three = __webpack_require__(6);
 
 	var _three2 = _interopRequireDefault(_three);
 
-	var _axis = __webpack_require__(13);
+	var _axis = __webpack_require__(14);
 
 	var _axis2 = _interopRequireDefault(_axis);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Group = function () {
+	        function Group() {
+	                _classCallCheck(this, Group);
+
+	                this.allObjectsgroup = new _three2.default.Group();
+	                this.axisGroup = new _three2.default.Group();
+
+	                this.objects = [];
+
+	                this.init();
+	        }
+
+	        _createClass(Group, [{
+	                key: 'init',
+	                value: function init() {
+	                        var cube = new _cube2.default().cube;
+
+	                        var axis = new _axis2.default();
+
+	                        var axes = axis.axes;
+	                        var texture = axis.texture;
+	                        var cylinders = axis.cylinders;
+	                        var centerCube = axis.centerCube;
+
+	                        this.cube = cube;
+	                        this.centerCube = centerCube;
+	                        this.xCylinder = cylinders.xCylinder;
+	                        this.yCylinder = cylinders.yCylinder;
+	                        this.zCylinder = cylinders.zCylinder;
+
+	                        this.axisGroup.add(axes.xLine);
+	                        this.axisGroup.add(axes.yLine);
+	                        this.axisGroup.add(axes.zLine);
+
+	                        this.axisGroup.add(texture.xText);
+	                        this.axisGroup.add(texture.yText);
+	                        this.axisGroup.add(texture.zText);
+
+	                        this.axisGroup.add(cylinders.xCylinder);
+	                        this.axisGroup.add(cylinders.yCylinder);
+	                        this.axisGroup.add(cylinders.zCylinder);
+
+	                        this.axisGroup.add(centerCube);
+
+	                        this.allObjectsgroup.add(cube);
+	                        this.allObjectsgroup.add(this.axisGroup);
+	                }
+	        }, {
+	                key: 'initObjects',
+	                value: function initObjects() {
+	                        this.objects.push(this.cube);
+	                        this.objects.push(this.xCylinder, this.yCylinder, this.zCylinder, this.centerCube);
+
+	                        console.log(this.objects);
+
+	                        return this.objects;
+	                }
+	        }]);
+
+	        return Group;
+	}();
+
+	// let group = new Group();
+
+	// export default group.group;
+
+
+	exports.default = Group;
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -43159,94 +42596,41 @@
 
 	        this.cube = null;
 
-	        this.axis = {};
-
-	        this.addAxis();
 	        this.init();
-	        this.initExternalCube();
-	        this.addCylinder();
 	    }
 
 	    _createClass(Cube, [{
 	        key: 'init',
 	        value: function init() {
-	            var geometry = new _three2.default.BoxGeometry(1, 1, 1);
+	            var geometry = new _three2.default.BoxGeometry(1.5, 1.5, 1.5);
 
 	            var material = new _three2.default.MeshBasicMaterial({
 	                color: 0xcccccc,
+	                depthTest: true,
 	                polygonOffset: true,
 	                polygonOffsetFactor: 0.5,
 	                polygonOffsetUnits: 0.5
 	            });
 
-	            this.cube = new _three2.default.Mesh(geometry, material);
-	            this.cube.name = "cube";
-	            this.cube.position.set(0, 0, 0);
+	            var cube = new _three2.default.Mesh(geometry, material);
+	            cube.name = "cube";
+	            cube.position.set(0, 0, 0);
 
-	            //添加边
 	            var frameGeometry = this.createBoxFrame(geometry);
 	            //正方体添加实线
-	            this.cube.add(new _three2.default.LineSegments(frameGeometry, new _three2.default.LineBasicMaterial({
+	            cube.add(new _three2.default.LineSegments(frameGeometry, new _three2.default.LineBasicMaterial({
 	                color: 'black',
-	                depthTest: 'true'
+	                depthTest: true
 	            })));
 	            //添加虚线
-	            this.cube.add(new _three2.default.LineSegments(frameGeometry, new _three2.default.LineDashedMaterial({
+	            cube.add(new _three2.default.LineSegments(frameGeometry, new _three2.default.LineDashedMaterial({
 	                color: 'black',
 	                gapSize: 0.05,
 	                dashSize: 0.05,
 	                depthTest: false
 	            })));
 
-	            //添加中心立方体
-	            var scaleController = new _three2.default.Mesh(new _three2.default.BoxGeometry(0.2, 0.2, 0.2), new _three2.default.MeshBasicMaterial({
-	                color: "yellow",
-	                depthTest: false
-	            }));
-
-	            scaleController.name = 'scaleController';
-
-	            // this.cube.add(scaleController);
-	            this.axis.scaleController = scaleController;
-	        }
-	    }, {
-	        key: 'initExternalCube',
-	        value: function initExternalCube() {
-	            var xLineColor = 0xFF0000,
-	                yLineColor = 0x008000,
-	                zLineColor = 0x0000FF;
-
-	            var geometry = new _three2.default.BoxGeometry(0.2, 0.2, 0.2);
-	            var xMaterial = new _three2.default.MeshBasicMaterial({
-	                color: xLineColor
-	            });
-	            var yMaterial = new _three2.default.MeshBasicMaterial({
-	                color: yLineColor
-	            });
-	            var zMaterial = new _three2.default.MeshBasicMaterial({
-	                color: zLineColor
-	            });
-
-	            var xCube = new _three2.default.Mesh(geometry, xMaterial);
-	            var yCube = new _three2.default.Mesh(geometry, yMaterial);
-	            var zCube = new _three2.default.Mesh(geometry, zMaterial);
-
-	            xCube.position.copy(this.axis.xLine.geometry.vertices[1]);
-	            yCube.position.copy(this.axis.yLine.geometry.vertices[1]);
-	            zCube.position.copy(this.axis.zLine.geometry.vertices[1]);
-
-	            xCube.name = "xCube";
-	            yCube.name = "yCube";
-	            zCube.name = "zCube";
-
-	            this.axis.xCube = xCube;
-	            this.axis.yCube = yCube;
-	            this.axis.zCube = zCube;
-
-	            // this.cube.add(xCube);
-	            // this.cube.add(yCube);
-	            // this.cube.add(zCube);
-
+	            this.cube = cube;
 	        }
 	    }, {
 	        key: 'createBoxFrame',
@@ -43278,47 +42662,6 @@
 
 	            return frameGeometry;
 	        }
-	    }, {
-	        key: 'addAxis',
-	        value: function addAxis() {
-	            this.axis = new _axis2.default();
-	        }
-	    }, {
-	        key: 'addCylinder',
-	        value: function addCylinder() {
-	            var geometry = new _three2.default.CylinderGeometry(0.5, 0.5, 1, 32);
-	            var material = new _three2.default.MeshBasicMaterial({
-	                // visible: false
-	                color: 0xffff00
-	            });
-	            var xCylinder = new _three2.default.Mesh(geometry, material);
-	            var yCylinder = new _three2.default.Mesh(geometry, material);
-	            var zCylinder = new _three2.default.Mesh(geometry, material);
-
-	            xCylinder.name = "xCylinder";
-	            yCylinder.name = "yCylinder";
-	            zCylinder.name = "zCylinder";
-
-	            xCylinder.position.copy(new _three2.default.Vector3(this.axis.xLine.geometry.vertices[1].x / 2, 0, 0));
-	            yCylinder.position.copy(new _three2.default.Vector3(0, this.axis.yLine.geometry.vertices[1].y / 2, 0));
-	            zCylinder.position.copy(new _three2.default.Vector3(0, 0, this.axis.zLine.geometry.vertices[1].z / 2));
-
-	            this.axis.xCylinder = xCylinder.rotateZ(Math.PI / 2);
-	            this.axis.yCylinder = yCylinder;
-	            this.axis.zCylinder = zCylinder.rotateX(Math.PI / 2);
-	        }
-	    }], [{
-	        key: 'rotateAroundWorldAxis',
-	        value: function rotateAroundWorldAxis(object, axis, radians) {
-	            var rotWorldMatrix = new _three2.default.Matrix4();
-	            rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
-
-	            rotWorldMatrix.multiply(object.matrix); // pre-multiply
-
-	            object.matrix = rotWorldMatrix;
-
-	            object.rotation.setFromRotationMatrix(object.matrix);
-	        }
 	    }]);
 
 	    return Cube;
@@ -43327,7 +42670,7 @@
 	exports.default = Cube;
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -43345,6 +42688,22 @@
 
 	var _three2 = _interopRequireDefault(_three);
 
+	var _line = __webpack_require__(15);
+
+	var _line2 = _interopRequireDefault(_line);
+
+	var _texture = __webpack_require__(16);
+
+	var _texture2 = _interopRequireDefault(_texture);
+
+	var _cylinder = __webpack_require__(17);
+
+	var _cylinder2 = _interopRequireDefault(_cylinder);
+
+	var _centerCube = __webpack_require__(18);
+
+	var _centerCube2 = _interopRequireDefault(_centerCube);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -43353,9 +42712,10 @@
 	    function Axis() {
 	        _classCallCheck(this, Axis);
 
-	        this.xLine = null;
-	        this.yLine = null;
-	        this.zLine = null;
+	        this.axes = null;
+	        this.texture = null;
+	        this.cylinders = null;
+	        this.centerCube = null;
 
 	        this.init();
 	    }
@@ -43363,16 +42723,82 @@
 	    _createClass(Axis, [{
 	        key: 'init',
 	        value: function init() {
+	            var axesOptions = {
+	                basePoint: new _three2.default.Vector3(0, 0, 0),
+	                xPoint: new _three2.default.Vector3(1, 0, 0),
+	                yPoint: new _three2.default.Vector3(0, 1, 0),
+	                zPoint: new _three2.default.Vector3(0, 0, 1),
+	                xColor: 0xff0000,
+	                yColor: 0x00ff00,
+	                zColor: 0x0000ff
+	            };
+	            var cylinderOptions = {
+	                xPoint: new _three2.default.Vector3(0.7, 0, 0),
+	                yPoint: new _three2.default.Vector3(0, 0.7, 0),
+	                zPoint: new _three2.default.Vector3(0, 0, 0.7)
+	            };
 
-	            var point = { x: 0, y: 0, z: 0 };
-	            var pointX = point.x,
-	                pointY = point.y,
-	                pointZ = point.z;
-	            var lineLength = 3;
+	            this.axes = new _line2.default(axesOptions);
+	            this.texture = new _texture2.default();
 
-	            this.xLine = this.getLine(new _three2.default.Vector3(pointX, pointY, pointZ), new _three2.default.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
-	            this.yLine = this.getLine(new _three2.default.Vector3(pointX, pointY, pointZ), new _three2.default.Vector3(pointX, pointY + lineLength, pointZ), 'yLine');
-	            this.zLine = this.getLine(new _three2.default.Vector3(pointX, pointY, pointZ), new _three2.default.Vector3(pointX, pointY, pointZ + lineLength), 'zLine');
+	            this.cylinders = new _cylinder2.default(cylinderOptions);
+
+	            this.centerCube = new _centerCube2.default(0.2).cube;
+	        }
+	    }]);
+
+	    return Axis;
+	}();
+
+	exports.default = Axis;
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/18.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Line = function () {
+	    function Line(options) {
+	        _classCallCheck(this, Line);
+
+	        this.xLine = null;
+	        this.yLine = null;
+	        this.zLine = null;
+
+	        this.options = options;
+
+	        this.init();
+	    }
+
+	    _createClass(Line, [{
+	        key: 'init',
+	        value: function init() {
+	            var basePoint = this.options.basePoint;
+	            var xPoint = this.options.xPoint;
+	            var yPoint = this.options.yPoint;
+	            var zPoint = this.options.zPoint;
+
+	            this.xLine = this.getLine(basePoint, xPoint, 'xLine');
+	            this.yLine = this.getLine(basePoint, yPoint, 'yLine');
+	            this.zLine = this.getLine(basePoint, zPoint, 'zLine');
 
 	            this.xLine.name = "xLine";
 	            this.yLine.name = "yLine";
@@ -43381,9 +42807,9 @@
 	    }, {
 	        key: 'getLine',
 	        value: function getLine(point1, point2, lineName) {
-	            var xLineColor = 0xFF0000,
-	                yLineColor = 0x008000,
-	                zLineColor = 0x0000FF;
+	            var xLineColor = this.options.xColor,
+	                yLineColor = this.options.yColor,
+	                zLineColor = this.options.zColor;
 
 	            return function () {
 	                var lineMaterial = new _three2.default.LineBasicMaterial({
@@ -43411,10 +42837,264 @@
 	        }
 	    }]);
 
-	    return Axis;
+	    return Line;
 	}();
 
-	exports.default = Axis;
+	exports.default = Line;
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/18.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Texture = function () {
+	        function Texture() {
+	                _classCallCheck(this, Texture);
+
+	                this.xText = null;
+	                this.yText = null;
+	                this.zText = null;
+
+	                this.init();
+	        }
+
+	        _createClass(Texture, [{
+	                key: 'init',
+	                value: function init() {
+	                        this.xText = this.makeTextSprite('X', {
+	                                fontsize: 60
+	                        });
+	                        this.yText = this.makeTextSprite('Y', {
+	                                fontsize: 60
+	                        });
+	                        this.zText = this.makeTextSprite('Z', {
+	                                fontsize: 60
+	                        });
+
+	                        this.xText.position.set(1, -0.6, -0.6);
+	                        this.yText.position.set(0, 0.5, -0.6);
+	                        this.zText.position.set(0.5, 0, 1);
+
+	                        this.xText.name = "xText";
+	                        this.yText.name = "yText";
+	                        this.zText.name = "zText";
+	                }
+	        }, {
+	                key: 'makeTextSprite',
+	                value: function makeTextSprite(message, parameters) {
+	                        if (parameters === undefined) parameters = {};
+	                        var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+	                        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+	                        var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+	                        var textColor = parameters.hasOwnProperty("textColor") ? parameters["textColor"] : { r: 0, g: 0, b: 0, a: 1.0 };
+
+	                        var canvas = document.createElement('canvas');
+	                        var context = canvas.getContext('2d');
+	                        context.font = "Bold " + fontsize + "px " + fontface;
+	                        var metrics = context.measureText(message);
+	                        var textWidth = metrics.width;
+
+	                        context.lineWidth = borderThickness;
+
+	                        context.fillStyle = "rgba(" + textColor.r + ", " + textColor.g + ", " + textColor.b + ", 1.0)";
+	                        context.fillText(message, borderThickness, fontsize + borderThickness);
+
+	                        var texture = new _three2.default.Texture(canvas);
+	                        texture.needsUpdate = true;
+	                        //过滤警告
+	                        texture.minFilter = _three2.default.LinearFilter;
+
+	                        var spriteMaterial = new _three2.default.SpriteMaterial({
+	                                map: texture,
+	                                depthTest: false
+	                                //            useScreenCoordinates: false
+	                        });
+	                        var sprite = new _three2.default.Sprite(spriteMaterial);
+	                        //        sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+	                        sprite.scale.set(1, 1, 1);
+
+	                        return sprite;
+	                }
+	        }]);
+
+	        return Texture;
+	}();
+
+	exports.default = Texture;
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/18.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Cylinder = function () {
+	    function Cylinder(options) {
+	        _classCallCheck(this, Cylinder);
+
+	        this.xCylinder = null;
+	        this.yCylinder = null;
+	        this.zCylinder = null;
+
+	        this.init(options);
+	    }
+
+	    _createClass(Cylinder, [{
+	        key: "init",
+	        value: function init(options) {
+	            var cylinderHeight = 0.7;
+	            var cylinderRadiusTop = 0.25;
+	            var cylinderRadiusBottom = 0.25;
+	            var geometry = new _three2.default.CylinderGeometry(cylinderRadiusTop, cylinderRadiusBottom, cylinderHeight, 32);
+	            var material = new _three2.default.MeshBasicMaterial({
+	                visible: false
+	                // color: 0xffff00,
+	                // depthTest: false
+	            });
+	            var xCylinder = new _three2.default.Mesh(geometry, material);
+	            var yCylinder = new _three2.default.Mesh(geometry, material);
+	            var zCylinder = new _three2.default.Mesh(geometry, material);
+
+	            xCylinder.name = "xCylinder";
+	            yCylinder.name = "yCylinder";
+	            zCylinder.name = "zCylinder";
+
+	            xCylinder.position.copy(options.xPoint);
+	            yCylinder.position.copy(options.yPoint);
+	            zCylinder.position.copy(options.zPoint);
+
+	            xCylinder = xCylinder.rotateZ(Math.PI / 2);
+	            // yCylinder = yCylinder;
+	            zCylinder = zCylinder.rotateX(Math.PI / 2);
+
+	            this.xCylinder = xCylinder;
+	            this.yCylinder = yCylinder;
+	            this.zCylinder = zCylinder;
+	        }
+	    }]);
+
+	    return Cylinder;
+	}();
+
+	exports.default = Cylinder;
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Created by suncg on 2016/8/18.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var CenterCube = function () {
+	    function CenterCube(length) {
+	        _classCallCheck(this, CenterCube);
+
+	        this.cube = null;
+
+	        this.init(length);
+	    }
+
+	    _createClass(CenterCube, [{
+	        key: 'init',
+	        value: function init(length) {
+	            var scaleController = new _three2.default.Mesh(new _three2.default.BoxGeometry(length, length, length), new _three2.default.MeshBasicMaterial({
+	                color: 0xffffff,
+	                depthTest: false,
+	                transparent: true,
+	                opacity: '0.3'
+	            }));
+	            scaleController.name = 'scaleController';
+
+	            this.cube = scaleController;
+	        }
+	    }]);
+
+	    return CenterCube;
+	}();
+
+	exports.default = CenterCube;
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	        value: true
+	});
+
+	var _three = __webpack_require__(6);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	        rotateAroundWorldAxis: function rotateAroundWorldAxis(object, axis, radians) {
+	                var rotWorldMatrix = new _three2.default.Matrix4();
+	                rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+	                rotWorldMatrix.multiply(object.matrix); // pre-multiply
+
+	                object.matrix = rotWorldMatrix;
+
+	                object.rotation.setFromRotationMatrix(object.matrix);
+	        }
+	}; /**
+	    * Created by suncg on 2016/8/18.
+	    */
 
 /***/ }
 /******/ ]);

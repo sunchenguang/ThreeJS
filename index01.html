@@ -156,9 +156,9 @@
             fontsize: 60
         });
 
-        yText.position.set(0, 1, -0.6);
-        xText.position.set(1.5, -0.6, -0.6);
-        zText.position.set(0.5, 0, 1.5);
+        xText.position.set(1, -0.6, -0.6);
+        yText.position.set(0, 0.5, -0.6);
+        zText.position.set(0.5, 0, 1);
 
 
         xText.name = "xText";
@@ -169,7 +169,10 @@
 
 
     function addCylinder() {
-        var geometry = new THREE.CylinderGeometry(0.25, 0.25, 1, 32);
+        var cylinderHeight = 0.7;
+        var cylinderRadiusTop = 0.25;
+        var cylinderRadiusBottom = 0.25;
+        var geometry = new THREE.CylinderGeometry(cylinderRadiusTop, cylinderRadiusBottom, cylinderHeight, 32);
         var material = new THREE.MeshBasicMaterial({
             visible: false
 //            color: 0xffff00,
@@ -189,7 +192,7 @@
         zCylinder.position.copy(new THREE.Vector3(0, 0, zLine.geometry.vertices[1].z / 2 + 0.2));
 
         xCylinder = xCylinder.rotateZ(Math.PI / 2);
-        yCylinder = yCylinder;
+//        yCylinder = yCylinder;
         zCylinder = zCylinder.rotateX(Math.PI / 2);
 
 
@@ -251,7 +254,7 @@
         }
         var point = point ? point : {x: 0, y: 0, z: 0};
         var pointX = point.x, pointY = point.y, pointZ = point.z;
-        var lineLength = 1.5;
+        var lineLength = 1;
 
 
         xLine = getLine(new THREE.Vector3(pointX, pointY, pointZ), new THREE.Vector3(pointX + lineLength, pointY, pointZ), 'xLine');
@@ -327,7 +330,7 @@
     function initCamera() {
 //        camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
         camera = new THREE.OrthographicCamera(-8, 8, 4, -4, 0.1, 1000)
-        camera.position.set(3, 4, 3);
+        camera.position.set(3, 3, 3);
 
         camera.up.set(0, 1, 0);
 
@@ -354,7 +357,7 @@
 
     // 初始化正方体
     function initObject() {
-        var geometry = new THREE.BoxGeometry(3, 3, 3);
+        var geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
 
         var material = new THREE.MeshBasicMaterial({
             color: 0xcccccc,
@@ -387,8 +390,10 @@
         )));
         //添加中心立方体
         scaleController = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({
-            color: "yellow",
-            depthTest: false
+            color: 0xffffff,
+            depthTest: false,
+            transparent: true,
+            opacity: '0.3'
         }));
         scaleController.name = 'scaleController';
 
@@ -461,7 +466,7 @@
 
                 case 'scaleController':
                     mouse.unproject(camera);
-                    scaleYDistance = -(mouse.y - prevMouse.y);
+                    scaleYDistance = (mouse.y - prevMouse.y);
 
                     if (prevMouse.y != 0) {
                         if (scaleYDistance > 0 && allObjectsGroup.scale.x < 2) {
@@ -526,7 +531,7 @@
         var intersects = raycaster.intersectObjects(objects);
 
         if (intersects.length > 0) {
-            controls.enabled = false;
+//            controls.enabled = false;
 
             SELECTED = intersects[0].object;
 
@@ -555,7 +560,7 @@
 
         event.preventDefault();
 
-        controls.enabled = true;
+//        controls.enabled = true;
 
         SELECTED = null;
 
@@ -563,8 +568,8 @@
         container.style.cursor = 'auto';
 
 
-        speedX = 0;
-        speedY = 0;
+//        speedX = 0;
+//        speedY = 0;
 
 
         prevMouse = new THREE.Vector3(0, 0, 0);
@@ -584,7 +589,7 @@
 
     function render() {
 
-        controls.update();
+//        controls.update();
 
         renderer.render(scene, camera);
 
@@ -598,7 +603,7 @@
         initScene();
         initLight();
         initObject();
-        initControls();
+//        initControls();
         initAxisLine();
         addText();
 
@@ -621,6 +626,12 @@
 
 
         scene.add(allObjectsGroup);
+        renderer.domElement.addEventListener('mousemove', onDocumentMouseMove, false);
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+        renderer.domElement.addEventListener('mouseup', onDocumentMouseUp, false);
+
+        window.addEventListener('resize', onWindowResize, false);
+
         animate();
 
     }

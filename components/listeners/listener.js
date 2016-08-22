@@ -3,157 +3,132 @@
  */
 import manager from '../manager';
 import THREE from 'three';
-import Cube from '../cube';
-
-
-// function onDocumentMouseDown(event) {
-//
-//     event.preventDefault();
-//
-//     raycaster.setFromCamera(mouse, camera);
-//
-//     var intersects = raycaster.intersectObjects(objects);
-//
-//     if (intersects.length > 0) {
-//         controls.enabled = false;
-//
-//         SELECTED = intersects[0].object;
-//         intersects.forEach(function (item, index) {
-//             if (item.object == cube) {
-//                 SELECTED = cube;
-//             }
-//             if (item.object == scaleController) {
-//                 SELECTED = scaleController;
-//             }
-//
-//
-//         });
-//
-//
-//         if (raycaster.ray.intersectPlane(plane, intersection)) {
-//             //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-//             offset.copy(intersection).sub(allObjectsGroup.position);
-//         }
-//
-//         container.style.cursor = 'move';
-//
-//     }
-//
-// }
-
-// Rotate an object around an arbitrary axis in world space
-function rotateAroundWorldAxis(object, axis, radians) {
-    rotWorldMatrix = new THREE.Matrix4();
-    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
-
-    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
-
-    object.matrix = rotWorldMatrix;
-
-    object.rotation.setFromRotationMatrix(object.matrix);
-}
+import Util from '../utils/util';
 
 export default {
-
-
     onMouseMove(event){
         event.preventDefault();
 
-        // console.log('mousemove-----------')
+        let raycaster = new THREE.Raycaster();
+        let distanceX, distanceY, speedX, speedY, scaleYDistance;
+        let xAxis = new THREE.Vector3(1, 0, 0), yAxis = new THREE.Vector3(0, 1, 0), zAxis = new THREE.Vector3(0, 0, 1);
 
+
+        //得到当前鼠标于三维的x,y坐标
         manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+        manager.mouse.z = 0.5;
 
-        manager.raycaster.setFromCamera(manager.mouse, manager.camera);
-
+        raycaster.setFromCamera(manager.mouse, manager.camera);
 
         if (manager.SELECTED) {
-            //
-            let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-            let intersection;
-            // console.log(plane)
+            switch (manager.SELECTED.name) {
+                case 'cube':
+                    // mouse.unproject(camera);可以得到一个射线指向你想要的方向,mouse的x,y,z值更新
+                    //mouse坐标-固定的偏移量=物体位置
+                    manager.mouse.unproject(manager.camera);
+                    manager.allObjectsGroup.position.copy(manager.mouse.sub(manager.offset));
+                    break;
 
-            // let intersects = manager.raycaster.intersectObject(manager.SELECTED);
-            let intersects = manager.raycaster.ray.intersectPlane(plane, intersection);
-            console.log(intersects)
-            if (intersects) {
-                // let intersection = intersects[0].point;
-                if (manager.SELECTED.name == "cube") {
-                    // 物体随鼠标移动 group中心=交点-偏移
-                    // console.log(manager)
+                case 'xCylinder':
+                    manager.mouse.unproject(manager.camera);
+                    distanceY = manager.mouse.y - manager.prevMouse.y;
+                    speedY = distanceY;
 
-                    manager.allObjectsGroup.position.copy(intersects.sub(manager.offset));
-                }
-
-                if (/^x[Cube|Cylinder|Line]/.test(manager.SELECTED.name)) {
-                    console.log('x AXIS---')
-                    // console.log(this)
-                    manager.distanceY = event.clientY - manager.prevY;
-                    manager.speedY = manager.distanceY * 0.01;
                     // 第一次点击移动时不旋转
-                    if (manager.prevY != 0) {
-                        Cube.rotateAroundWorldAxis(manager.objects[0], manager.xAxis, manager.speedY);
+                    if (manager.prevMouse.y != 0) {
+                        Util.rotateAroundWorldAxis(manager.objects[0], xAxis, -speedY);
                     }
-                    manager.prevY = event.clientY;
-                }
+                    manager.prevMouse.copy(manager.mouse);
+
+                    break;
 
 
+                case 'yCylinder':
+                    manager.mouse.unproject(manager.camera);
+                    distanceX = manager.mouse.x - manager.prevMouse.x;
+                    speedX = distanceX;
+
+                    // 第一次点击移动时不旋转
+                    if (manager.prevMouse.x != 0) {
+                        Util.rotateAroundWorldAxis(manager.objects[0], yAxis, speedX);
+                    }
+                    manager.prevMouse.copy(manager.mouse);
+                    break;
+
+                case 'zCylinder':
+                    manager.mouse.unproject(manager.camera);
+                    distanceY = manager.mouse.y - manager.prevMouse.y;
+                    speedY = distanceY;
+
+                    // 第一次点击移动时不旋转
+                    if (manager.prevMouse.y != 0) {
+                        Util.rotateAroundWorldAxis(manager.objects[0], zAxis, speedY);
+                    }
+                    manager.prevMouse.copy(manager.mouse);
+
+
+                    break;
+
+                case 'scaleController':
+                    manager.mouse.unproject(manager.camera);
+                    scaleYDistance = (manager.mouse.y - manager.prevMouse.y);
+
+                    if (manager.prevMouse.y != 0) {
+                        if (scaleYDistance > 0 && manager.allObjectsGroup.scale.x < 2) {
+                            manager.allObjectsGroup.scale.multiplyScalar(1.02);
+                            manager.axisGroup.scale.divideScalar(1.02);
+                        } else {
+                            if (manager.allObjectsGroup.scale.x > 0.3) {
+                                manager.allObjectsGroup.scale.multiplyScalar(0.98);
+                                manager.axisGroup.scale.divideScalar(0.98);
+                            }
+                        }
+                    }
+                    manager.prevMouse.copy(manager.mouse);
+
+
+                    break;
+                default:
+                    console.log('mouse move select error')
             }
 
 
+            return;
         }
 
+        let intersects = raycaster.intersectObjects(manager.objects);
 
     },
     onMouseDown(event){
         event.preventDefault();
 
-        // console.log('mousedown')
+        let raycaster = new THREE.Raycaster();
 
-        manager.mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-        manager.mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera(manager.mouse, manager.camera);
 
-        manager.raycaster.setFromCamera(manager.mouse, manager.camera);
-
-        let intersects = manager.raycaster.intersectObjects(manager.objects);
-
+        let intersects = raycaster.intersectObjects(manager.objects);
 
         if (intersects.length > 0) {
-            // console.log(intersects)
-            let chosen = null;
+            manager.SELECTED = intersects[0].object;
 
-            manager.controls.enabled = false;
-
-            chosen = intersects[0];
-            manager.SELECTED = chosen.object;
-
-            for (let item of intersects) {
-
-                if (item.object.name == "cube") {
-                    chosen = item;
-                    manager.SELECTED = chosen.object;
+            //当与射线相交的物体中有坐标轴体或中心立方体时优先选中
+            for (let i = 0; i < intersects.length; i++) {
+                if (/^[x|y|z]Cylinder$/.test(intersects[i].object.name)) {
+                    manager.SELECTED = intersects[i].object;
+                    break;
                 }
-                if (item.object.name == "scaleController") {
-                    chosen = item;
-                    manager.SELECTED = chosen.object;
+                if (/^scaleController$/.test(intersects[i].object.name)) {
+                    manager.SELECTED = intersects[i].object;
                     break;
                 }
 
             }
 
-            manager.intersection = chosen.point;
-
-            manager.offset.copy(manager.intersection).sub(manager.allObjectsGroup.position);
-
-            // console.log(manager)
-
-            // if (manager.raycaster.ray.intersectPlane(plane, intersection)) {
-            //     //cube的position一直没变，是group的位置变化 偏移=交点-group中心
-            //     offset.copy(intersection).sub(allObjectsGroup.position);
-            // }
-
-            // manager.container.style.cursor = 'move';
-
+            //更新mouse位置
+            manager.mouse.unproject(manager.camera);
+            //鼠标位置-物体位置=偏移量
+            manager.offset.copy(manager.mouse).sub(manager.allObjectsGroup.position);
         }
 
 
@@ -161,19 +136,9 @@ export default {
     onMouseUp(event){
         event.preventDefault();
 
-        manager.controls.enabled = true;
-
-
-        manager.speedX = 0;
-        manager.speedY = 0;
-        manager.prevX = 0;
-        manager.prevY = 0;
-
-        // if (INTERSECTED) {
-
         manager.SELECTED = null;
 
-        // }
+        manager.prevMouse = new THREE.Vector3(0, 0, 0);
     },
     onWindowResize(e){
         manager.camera.aspect = window.innerWidth / window.innerHeight;
